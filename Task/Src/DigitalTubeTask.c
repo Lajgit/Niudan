@@ -4,38 +4,24 @@
 
 static uint8_t DigitalBuffer[4] = {0x82};
 DigitalTube_t DigitalTube;
-SoftwareSPI_HandleTypeDef tube_spi;
-
-void SoftSPI_Init(void)
-{
-    SoftwareSPI_InitTypeDef Init;
-
-    Init.SDA_Port = Tube_SDA_GPIO_Port;
-    Init.SDA_Pin = Tube_SDA_Pin;
-    Init.CLK_Port = Tube_CLK_GPIO_Port;
-    Init.CLK_Pin = Tube_CLK_Pin;
-    Init.CS_Port = NULL;
-    Init.CS_Pin = NULL;
-    Init.CLK_CPOL = 0;
-    Init.CS_Level = GPIO_PIN_SET;
-    Init.DelayTick = 36;
-    SoftwareSPI_Init(&tube_spi, Init);
-}
 
 void DigitalTubeTask_Init(void)
 {
-    SoftSPI_Init();
     DigitalTube_Init_t Init;
 
-    Init.hspi = &tube_spi;
+    Init.hspi = &hspi2;
     Init.Buffer = DigitalBuffer;
     Init.bit_num = sizeof(DigitalBuffer);
-    Init.LE_GPIO = NULL;
-    Init.LE_Pin = NULL;
+    Init.LE_GPIO = Tube_RCLK_GPIO_Port;
+    Init.LE_Pin = Tube_RCLK_Pin;
     Init.CODE_CA = DIGITAL3BIT_CODE_CA;
+
     DigitalTube_Init(&DigitalTube, Init);
     DigitalTube.Set_Num(&DigitalTube, 0, 0, 4);
     DigitalTube.Refresh(&DigitalTube);
+
+    /* 中文注释：首帧数据完成锁存后再拉低SEG_OE，使能数码管输出。 */
+    HAL_GPIO_WritePin(Tube_OE_GPIO_Port, Tube_OE_Pin, GPIO_PIN_RESET);
 }
 
 void DigitalTube_Task(void)

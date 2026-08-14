@@ -4,7 +4,6 @@
 #include "FlashTask.h"
 #include "InterruptTask.h"
 #include "KeyTask.h"
-#include "LightTask.h"
 #include "MesgTask.h"
 #include "port_event.h"
 #include "DigitalTubeTask.h"
@@ -12,6 +11,7 @@
 
 #define SYSLIGHT_BLINK_TIME 500
 
+/* 兼容旧工程中仍参与编译但已退出运行路径的灯效模块，第二阶段删除对应工程项后再移除。 */
 Scene_t Scene = IdleScene;
 Event_Handle_t Event;
 
@@ -39,10 +39,13 @@ void Main_Init(void)
     Device_Init();
     HoolleInput_FilterInit();
     KeyAll_Init();
-    LightTask_Init();
+
+    /* 中文注释：数码管属于新扭蛋机控制板本地硬件，初始化SPI2移位输出并显示0。 */
+    DigitalTubeTask_Init();
+
+    /* 中文注释：新原理图没有旧弹界球盘WS2812和呼吸灯，本地LightTask不再初始化。 */
     Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x04, Setting.Ctrl_Lightness, 0x00); // 控台亮度
     Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x03, 0x00, 0x00);                   // 控台灯效
-    // DigitalTubeTask_Init();
 }
 
 void Main_Task(void)
@@ -53,12 +56,13 @@ void Main_Task(void)
     HAL_IWDG_Refresh(&hiwdg);
     Key_Task();
     HAL_IWDG_Refresh(&hiwdg);
-    LightTask();
-    HAL_IWDG_Refresh(&hiwdg);
+    /* 中文注释：旧弹界本地灯效任务已从主循环移除。 */
     CtrlTask();
     HAL_IWDG_Refresh(&hiwdg);
     Mesg_Task();
     HAL_IWDG_Refresh(&hiwdg);
-    // DigitalTube_Task();
+
+    /* 中文注释：保持现有数码管任务刷新节奏，避免后续显示扩展时改变原工程行为。 */
+    DigitalTube_Task();
     SystemLight_Task();
 }

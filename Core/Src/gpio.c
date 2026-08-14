@@ -56,102 +56,74 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, KeyLED_1_Pin|KeyLED_2_Pin|CardOutput_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CardOutput_GPIO_Port, CardOutput_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_RESET);
+  /* 中文注释：新扭蛋机原理图中电子锁控制为 PA0，默认输出低电平保持关闭。 */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, Q7_Pin|Q8_Pin|Q9_Pin|Q10_Pin
-                          |Q11_Pin, GPIO_PIN_RESET);
+  /* 中文注释：数码管RCLK默认低电平；SEG_OE先拉高关闭输出，首帧写入后再使能。 */
+  HAL_GPIO_WritePin(Tube_RCLK_GPIO_Port, Tube_RCLK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(Tube_OE_GPIO_Port, Tube_OE_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : HoolleInput_Pin CardFeedback_Pin CoinInput_Pin */
-  /* 进珠光眼：珠子开始遮挡时计数 */
+  /* 进珠光眼由SysTick软件滤波扫描，不再配置无效的EXTI2。 */
   GPIO_InitStruct.Pin = HoolleInput_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-  /* 出卡反馈和投币保持原上升沿 */
-  GPIO_InitStruct.Pin =
-      CardFeedback_Pin |
-      CoinInput_Pin;
+  HAL_GPIO_Init(HoolleInput_GPIO_Port, &GPIO_InitStruct);
 
+  /* 出卡反馈和投币保持原上升沿。 */
+  GPIO_InitStruct.Pin = CardFeedback_Pin | CoinInput_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : HoolleOutput_1_Pin HoolleOutput_2_Pin */
-  GPIO_InitStruct.Pin = HoolleOutput_1_Pin|HoolleOutput_2_Pin;
+  /* 两路出货光眼均需要检测高低电平变化。 */
+  GPIO_InitStruct.Pin = HoolleOutput_1_Pin | HoolleOutput_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LED_Pin KeyLED_1_Pin KeyLED_2_Pin CardOutput_Pin */
-  GPIO_InitStruct.Pin = LED_Pin|KeyLED_1_Pin|KeyLED_2_Pin|CardOutput_Pin;
+  /* 系统指示灯 */
+  GPIO_InitStruct.Pin = LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SettingButton_Pin Button1_Pin */
-  GPIO_InitStruct.Pin = SettingButton_Pin|Button1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SD_CS_Pin */
-  GPIO_InitStruct.Pin = SD_CS_Pin;
+  /* 卡片机控制输出 */
+  GPIO_InitStruct.Pin = CardOutput_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(CardOutput_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Hole_B8_Pin Hole_B6_Pin Hole_Y5_Pin Hole_Y6_Pin
-                           KeyBoard3_Pin KeyBoard2_Pin */
-  GPIO_InitStruct.Pin = Hole_B8_Pin|Hole_B6_Pin|Hole_Y5_Pin|Hole_Y6_Pin
-                          |KeyBoard3_Pin|KeyBoard2_Pin;
+  /* 中文注释：电子锁MOS控制脚，原弹界TIM5灯效占用已取消。 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* 中文注释：PB12为数码管锁存时钟RCLK，PB14为段输出使能SEG_OE。 */
+  GPIO_InitStruct.Pin = Tube_RCLK_Pin | Tube_OE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* 中文注释：后台设置按键K1/K2使用PB6/PB7，均由板上电阻上拉，按下为低。 */
+  GPIO_InitStruct.Pin = KeyBoard3_Pin | KeyBoard2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Hole_B4_Pin Hole_Y7_Pin Hole_Y8_Pin Hole_B1_Pin
-                           Hole_B2_Pin Hole_Y1_Pin Hole_P1_Pin Hole_P2_Pin
-                           KeyBoard1_Pin */
-  GPIO_InitStruct.Pin = Hole_B4_Pin|Hole_Y7_Pin|Hole_Y8_Pin|Hole_B1_Pin
-                          |Hole_B2_Pin|Hole_Y1_Pin|Hole_P1_Pin|Hole_P2_Pin
-                          |KeyBoard1_Pin;
+  /* 中文注释：后台设置按键K3使用PD0；游玩按键1~3使用PD8/PD9/PD10，均由板上电阻上拉。 */
+  GPIO_InitStruct.Pin = KeyBoard1_Pin | PlayButton1_Pin | PlayButton2_Pin | PlayButton3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : Hole_Y2_Pin Hole_B3_Pin Hole_Y3_Pin Hole_B5_Pin */
-  GPIO_InitStruct.Pin = Hole_Y2_Pin|Hole_B3_Pin|Hole_Y3_Pin|Hole_B5_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : Hole_P3_Pin Hole_Y4_Pin Hole_B7_Pin */
-  GPIO_InitStruct.Pin = Hole_P3_Pin|Hole_Y4_Pin|Hole_B7_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : Q7_Pin Q8_Pin Q9_Pin Q10_Pin
-                           Q11_Pin */
-  GPIO_InitStruct.Pin = Q7_Pin|Q8_Pin|Q9_Pin|Q10_Pin
-                          |Q11_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 

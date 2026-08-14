@@ -5,10 +5,7 @@
 #include "CommTask.h"
 #include "port_event.h"
 #include "tim.h"
-#include "stdio.h"
 
-#define Mesg_Head 0xAA
-#define Mesg_Tail 0x55
 #define COIN_INPUT_DEBOUNCE_TIME 50U
 
 /* TIM7每个计数为0.1ms，20个计数对应2ms。 */
@@ -21,10 +18,6 @@ extern Event_Handle_t Mesg_event;
 extern Event_Handle_t Event;
 extern Motor_Hoolle Motor_Hoolle1, Motor_Hoolle2;
 extern Motor_Card Card;
-extern Switch_Valve Lock_Valve, Valve;
-extern uint8_t LightBoard_Lightness;
-extern uint8_t LightBelt_Lightness;
-extern uint8_t sm16306s_data[2];
 extern Rx_HandleTypeDef Rx1;
 extern Rx_HandleTypeDef Rx3;
 

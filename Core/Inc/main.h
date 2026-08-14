@@ -95,20 +95,25 @@ void Error_Handler(void);
 #define SD_MOSI_GPIO_Port GPIOA
 #define CardOutput_Pin GPIO_PIN_4
 #define CardOutput_GPIO_Port GPIOC
-#define Hole_B8_Pin GPIO_PIN_12
-#define Hole_B8_GPIO_Port GPIOB
-#define Hole_B6_Pin GPIO_PIN_13
-#define Hole_B6_GPIO_Port GPIOB
-#define Hole_Y5_Pin GPIO_PIN_14
-#define Hole_Y5_GPIO_Port GPIOB
-#define Hole_Y6_Pin GPIO_PIN_15
-#define Hole_Y6_GPIO_Port GPIOB
-#define Hole_B4_Pin GPIO_PIN_8
-#define Hole_B4_GPIO_Port GPIOD
-#define Hole_Y7_Pin GPIO_PIN_9
-#define Hole_Y7_GPIO_Port GPIOD
-#define Hole_Y8_Pin GPIO_PIN_10
-#define Hole_Y8_GPIO_Port GPIOD
+
+/* 中文注释：J6数码管接口，PB13/PB15复用SPI2，PB12/PB14作为普通GPIO。 */
+#define Tube_RCLK_Pin GPIO_PIN_12
+#define Tube_RCLK_GPIO_Port GPIOB
+#define Tube_SRCLK_Pin GPIO_PIN_13
+#define Tube_SRCLK_GPIO_Port GPIOB
+#define Tube_OE_Pin GPIO_PIN_14
+#define Tube_OE_GPIO_Port GPIOB
+#define Tube_SER_Pin GPIO_PIN_15
+#define Tube_SER_GPIO_Port GPIOB
+
+/* 中文注释：三路外接游玩按键，协议编号依次为1、2、3。 */
+#define PlayButton1_Pin GPIO_PIN_8
+#define PlayButton1_GPIO_Port GPIOD
+#define PlayButton2_Pin GPIO_PIN_9
+#define PlayButton2_GPIO_Port GPIOD
+#define PlayButton3_Pin GPIO_PIN_10
+#define PlayButton3_GPIO_Port GPIOD
+
 #define Hole_B1_Pin GPIO_PIN_11
 #define Hole_B1_GPIO_Port GPIOD
 #define Hole_B2_Pin GPIO_PIN_12
@@ -135,6 +140,8 @@ void Error_Handler(void);
 #define Hole_B7_GPIO_Port GPIOA
 #define Servo_2_Pin GPIO_PIN_15
 #define Servo_2_GPIO_Port GPIOA
+
+/* 中文注释：后台设置按键。原理图K1=PB6、K2=PB7、K3=PD0；旧宏名暂保留以缩小修改范围。 */
 #define KeyBoard1_Pin GPIO_PIN_0
 #define KeyBoard1_GPIO_Port GPIOD
 #define Q7_Pin GPIO_PIN_3

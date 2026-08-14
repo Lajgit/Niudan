@@ -3,11 +3,10 @@
 #include "CtrlTask.h"
 #include "KeyTask.h"
 #include "MainTask.h"
-#include "LightTask.h"
 #include "FlashTask.h"
+#include "DigitalTubeTask.h"
 #include "app_crc.h"
 #include "app_list.h"
-#include "port_digitaltube.h"
 #include "string.h"
 #include "usart.h"
 
@@ -34,21 +33,14 @@ Rx_HandleTypeDef Rx1;
 Tx_HandleTypeDef Tx3;
 Rx_HandleTypeDef Rx3;
 
-extern Event_Handle_t Event;
 extern Event_Handle_t Mesg_event;
 extern Motor_Card Card;
 extern Motor_Hoolle Motor_Hoolle1;
 extern Motor_Hoolle Motor_Hoolle2;
-extern servo_t Servo1, Servo2, Servo3;
+extern servo_t Servo1;
 extern Switch_Valve Lock_Valve;
 extern ListHandle_t ResendList, DealList;
-extern Scene_t Scene;
-extern Light_t Light1;
-extern Light_t Light2;
-extern BreathLight_t *BreathList[];
 extern Setting_TypeDef Setting;
-extern Light_Handle_t *Light_BLUE[8];
-extern Light_Handle_t *Light_YELLOW[8];
 
 static bool Board_WriteBootRequest(uint32_t request_magic)
 {
@@ -136,42 +128,20 @@ static void USART1_Deal(void *Rx_mesg)
             case r_GetVersion:
                 EventGroupSetBits(&Mesg_event, MesgEvent_VersionRequest);
                 break;
-                /// 出珠
+                /// 出珠/扭蛋
             case r_HoolleOutput:
                 data = ((mesg->Data3 << 8) | mesg->Data4);
                 if (mesg->ExpandCode == 0x00)
-                    Hoolle_Output(&Motor_Hoolle2, data); // 瓷珠
+                    Hoolle_Output(&Motor_Hoolle2, data);
                 else
-                    Hoolle_Output(&Motor_Hoolle1, data); // 钢珠
+                    Hoolle_Output(&Motor_Hoolle1, data);
                 break;
                 /// 出卡
             case r_CardOutput:
                 data = ((mesg->Data3 << 8) | mesg->Data4);
                 Card_Output(&Card, data);
                 break;
-                /// 球盘亮度
-            case r_BoardLightness:
-                Setting.Board_Lightness = mesg->Data4;
-                Light1.Init = true;
-                Light2.Init = true;
-                SemaphoreGive(Light1.Semaphore);
-                SemaphoreGive(Light2.Semaphore);
-                break;
-                /// 灯带亮度
-            case r_LightBeltLightness:
-                Setting.LightBelt_Lightness = mesg->Data4;
-                BreathLight_RefreshState(BreathList, 4);
-                break;
-                /// 场景切换
-            case r_SceneChange:
-                Scene = mesg->Data4;
-                Light1.Init = true;
-                Light2.Init = true;
-                SemaphoreGive(Light1.Semaphore);
-                SemaphoreGive(Light2.Semaphore);
-                EventGroupSetBits(&Event, Event_SceneChange);
-                break;
-                /// 清珠
+                /// 清珠/清扭蛋
             case r_OutputAllHoolle:
                 if (mesg->ExpandCode == 0x00)
                 {
@@ -202,60 +172,13 @@ static void USART1_Deal(void *Rx_mesg)
                 Lock_Valve.Switch.state = DEVICE_STATE_START;
                 EventGroupSetBits(&Mesg_event, MesgEvent_Unlock);
                 break;
-                /// 舵机控制
-            case r_ServoControl:
-                if (mesg->ExpandCode == 0x00)
-                {
-                    // 关门
-                    Servo2.SetAngle(&Servo2, 5);
-                    Servo3.SetAngle(&Servo3, 175);
-                    RGB_SetMoreColor(&Light1, 19, 20, NONE, 0, 0);
-                    RGB_SetMoreColor(&Light1, 36, 37, NONE, 0, 0);
-                    EventGroupClearBits(&Mesg_event, Event_DoorOpen);
-                    Light1.Init = true;
-                }
-                if (mesg->ExpandCode == 0x01)
-                {
-                    // 开门
-                    Servo2.SetAngle(&Servo2, 65);
-                    Servo3.SetAngle(&Servo3, 115);
-                    EventGroupSetBits(&Mesg_event, Event_DoorOpen);
-                    Light1.Init = true;
-                }
-                break;
-                /// 灯光控制
-            case r_LightControl:
-                /*
-                 * 中文注释：
-                 * Data2：粉灯编号，0x02左眼，0x03右眼；0x00不控制粉灯。
-                 * Data3：蓝灯编号0x01~0x08；Data4：黄灯编号0x01~0x08。
-                 * ExpandCode：0x00关闭，0x01打开，0x02流水，0x03闪烁。
-                 * 粉灯不支持0x02流水，鼻子灯始终关闭。
-                 */
-                if (mesg->Data2 == PINK_LIGHT_LEFT ||
-                    mesg->Data2 == PINK_LIGHT_RIGHT)
-                {
-                    PinkLight_SetState(mesg->Data2, mesg->ExpandCode);
-                }
-
-                if (mesg->ExpandCode <= LIGHT_STATE_BLINK)
-                {
-                    if (mesg->Data3 >= 0x01U && mesg->Data3 <= 0x08U)
-                    {
-                        Light_BLUE[mesg->Data3 - 1U]->state = mesg->ExpandCode;
-                    }
-                    if (mesg->Data4 >= 0x01U && mesg->Data4 <= 0x08U)
-                    {
-                        Light_YELLOW[mesg->Data4 - 1U]->state = mesg->ExpandCode;
-                    }
-                }
-                break;
+                /* 中文注释：旧弹界球盘亮度、灯带、场景、双门舵机和球盘灯控制均已删除，不再驱动新原理图不存在的硬件。 */
                 /// 控台亮度
             case r_CtrlLightness:
                 Setting.Ctrl_Lightness = mesg->Data4;
                 Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x04, Setting.Ctrl_Lightness, 0x00);
                 break;
-            /// 舵机归零
+                /// 舵机1归零
             case r_ServoReset:
                 Servo1.SetAngle(&Servo1, 90);
                 break;
@@ -275,13 +198,14 @@ static void USART1_Deal(void *Rx_mesg)
                 break;
                 /// 数码管显示
             case r_DigitalTubeData:
-            {
-                uint32_t data = mesg->Data1 << 24 | mesg->Data2 << 16 | mesg->Data3 << 8 | mesg->Data4;
-                // DigitalTube.Set_Num(&DigitalTube, 0, data, 4);
-                // DigitalTube.Refresh(&DigitalTube);
-                Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x01, data, 0x00); // 发送给控台板
+                data = (uint32_t)mesg->Data1 << 24 |
+                       (uint32_t)mesg->Data2 << 16 |
+                       (uint32_t)mesg->Data3 << 8 |
+                       (uint32_t)mesg->Data4;
+                /* 中文注释：新控制板数码管在本板J6，由SPI2直接刷新，不再转发给控台板。 */
+                DigitalTube.Set_Num(&DigitalTube, 0, data, 4);
+                DigitalTube.Refresh(&DigitalTube);
                 break;
-            }
             }
             /// 将该消息包加入已处理列表，防止短时间内重复处理同样ID的消息包
             List_AddNode(&DealList, mesg->ID, HAL_GetTick());
@@ -323,7 +247,6 @@ static void USART3_Deal(void *Rx_mesg)
             {
                 Servo1.IncreaseAngle(&Servo1, 1);
                 Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Encoder, 0x00, 0x00);
-
             }
             else if (mesg->ExpandCode == 0x02)
                 Servo1.SetAngle(&Servo1, 90);
