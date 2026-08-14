@@ -82,7 +82,8 @@ static void Board_SystemRestart(bool enter_bootloader)
     if (!Board_WriteBootRequest(request_magic))
         return;
 
-    Motor_Hoolle1.Motor.state = DEVICE_STATE_STOP;
+    /* 中文注释：复位前强制退出0x21手动常转模式并立即停止吐珠电机。 */
+    SteelBall_MotorSwitch(MOTOR_SWITCH_OFF);
     Motor_Hoolle2.Motor.state = DEVICE_STATE_STOP;
     Card.Switch.state = DEVICE_STATE_STOP;
 
@@ -181,9 +182,22 @@ static void USART1_Deal(void *Rx_mesg)
                 Servo1.SetAngle(&Servo1, 90);
                 break;
 
+            /// 吐珠/钢珠电机手动开关
+            case r_SteelBallMotorSwitch:
+                /*
+                 * 中文注释：0x21使用ExpandCode控制手动常转。
+                 * 0x00立即关闭，0x01开启后持续运行，不受数量和超时状态机影响。
+                 */
+                if (mesg->ExpandCode == MOTOR_SWITCH_OFF)
+                    SteelBall_MotorSwitch(MOTOR_SWITCH_OFF);
+                else if (mesg->ExpandCode == MOTOR_SWITCH_ON)
+                    SteelBall_MotorSwitch(MOTOR_SWITCH_ON);
+                break;
+
             /// 停止所有设备
             case r_StopAllDevice:
-                Motor_Hoolle1.Motor.state = DEVICE_STATE_STOP;
+                /* 中文注释：0xFF必须同时退出0x21手动常转模式，防止下一轮CtrlTask重新启动。 */
+                SteelBall_MotorSwitch(MOTOR_SWITCH_OFF);
                 Motor_Hoolle2.Motor.state = DEVICE_STATE_STOP;
                 Card.Switch.state = DEVICE_STATE_STOP;
                 break;
