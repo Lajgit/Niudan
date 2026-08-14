@@ -47,6 +47,10 @@
 #define KEY_EVENT_LONG 0x02U
 #define KEY_EVENT_RELEASE 0x03U
 
+/* 中文注释：0x21吐珠电机手动开关的ExpandCode定义。 */
+#define MOTOR_SWITCH_OFF 0x00U
+#define MOTOR_SWITCH_ON 0x01U
+
 /// 主板发送给安卓的消息功能码
 #define t_VersionRequest 0x00      // 版本请求应答
 #define t_HoolleInput 0x01         // 投入弹珠
@@ -92,6 +96,7 @@
 #define r_LightControl 0x15           // 灯控制（旧协议保留，当前未处理）
 #define r_DigitalTubeData 0x16        // 主板直连四位数码管显示数据
 #define r_ServoReset 0x20             // 舵机1归零
+#define r_SteelBallMotorSwitch 0x21   // 吐珠/钢珠电机手动开关，0=关闭，1=常转
 #define r_StopAllDevice 0xFF          // 停止所有输出
 #define r_SystemReset 0xF0            // 系统复位/进入Bootloader
 
