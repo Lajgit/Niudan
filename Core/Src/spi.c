@@ -42,7 +42,8 @@ void MX_SPI2_Init(void)
   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  /* 中文注释：外接数码管模块的CLK经过74HC14反相，使用第二边沿更新可保证SM16306在其上升沿采样时数据已经稳定。 */
+  hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
   /* 中文注释：SPI2时钟用于数码管移位寄存器，使用较低速率保证外接线和接口板稳定。 */
   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
