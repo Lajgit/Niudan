@@ -18,7 +18,8 @@ typedef struct
     motor_t Motor;
     volatile uint16_t Hoolle_num;
     volatile uint8_t RetryCount;
-    volatile uint8_t ClearMode;//增加一个清珠标志
+    volatile uint8_t ClearMode; // 清珠标志
+    volatile uint8_t ManualRun; // 手动常转模式：1时忽略数量、超时和反转重试逻辑
 } Motor_Hoolle;
 
 typedef struct
@@ -37,6 +38,7 @@ typedef struct
 void Device_Init(void);
 void CtrlTask(void);
 void Hoolle_Output(Motor_Hoolle *Motor, uint16_t num);
+void SteelBall_MotorSwitch(uint8_t enable);
 void SteelBall_OutputEverySecond(void);
 void Card_Output(Motor_Card *Switch, uint16_t num);
 
