@@ -96,9 +96,8 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM7_Init();
   MX_IWDG_Init();
-  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* 中文注释：按当前扭蛋机原理图，仅初始化实际使用的外设；SPI2用于本板数码管。 */
+  /* 中文注释：当前无独立控台，仅初始化实际运行所需外设；SPI2用于本板数码管，USART1用于安卓通信。 */
   Main_Init();
   /* USER CODE END 2 */
 
@@ -182,8 +181,8 @@ void Error_Handler(void)
 /**
   * @brief  Reports the name of the source file and source line number
   *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
+  * @param  file: pointer to the file name
+  * @param  line: source line number
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
