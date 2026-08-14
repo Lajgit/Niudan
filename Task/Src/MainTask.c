@@ -15,7 +15,6 @@
 Scene_t Scene = IdleScene;
 Event_Handle_t Event;
 
-extern Tx_HandleTypeDef Tx3;
 void System_Reset(void)
 {
     __disable_irq();
@@ -40,12 +39,10 @@ void Main_Init(void)
     HoolleInput_FilterInit();
     KeyAll_Init();
 
-    /* 中文注释：数码管属于新扭蛋机控制板本地硬件，初始化SPI2移位输出并显示0。 */
+    /* 中文注释：当前没有独立控台，四位数码管由主板SPI2直接驱动。 */
     DigitalTubeTask_Init();
 
-    /* 中文注释：新原理图没有旧弹界球盘WS2812和呼吸灯，本地LightTask不再初始化。 */
-    Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x04, Setting.Ctrl_Lightness, 0x00); // 控台亮度
-    Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x03, 0x00, 0x00);                   // 控台灯效
+    /* 中文注释：游玩按键和后台设置按键均直接接主板GPIO，不再向旧控台发送初始化命令。 */
 }
 
 void Main_Task(void)
@@ -62,7 +59,7 @@ void Main_Task(void)
     Mesg_Task();
     HAL_IWDG_Refresh(&hiwdg);
 
-    /* 中文注释：保持现有数码管任务刷新节奏，避免后续显示扩展时改变原工程行为。 */
+    /* 中文注释：数码管为主板直连模块，保持本地刷新任务。 */
     DigitalTube_Task();
     SystemLight_Task();
 }
