@@ -2,14 +2,13 @@
 #define __PORT_DIGITALTUBE_H__
 
 #include "main.h"
-#include "softspi.h"
 #include "stdbool.h"
 #include "string.h"
 
 typedef struct
 {
-    SoftwareSPI_HandleTypeDef *hspi;
-    GPIO_TypeDef * LE_GPIO;
+    SPI_HandleTypeDef *hspi;
+    GPIO_TypeDef *LE_GPIO;
     uint16_t LE_Pin;
     uint8_t *Buffer;
     uint8_t bit_num;
@@ -21,8 +20,8 @@ typedef struct
 
 typedef struct
 {
-    SoftwareSPI_HandleTypeDef *hspi;
-    GPIO_TypeDef * LE_GPIO;
+    SPI_HandleTypeDef *hspi;
+    GPIO_TypeDef *LE_GPIO;
     uint16_t LE_Pin;
     uint8_t *Buffer;
     uint8_t bit_num;
@@ -35,5 +34,5 @@ extern const uint8_t DIGITAL3BIT_CODE_CA[];
 extern const uint8_t TOWER_CODE_CA[];
 extern const uint8_t TEST_CODE_CA[];
 
-void DigitalTube_Init(DigitalTube_t *DigitalTube,DigitalTube_Init_t Init);
+void DigitalTube_Init(DigitalTube_t *DigitalTube, DigitalTube_Init_t Init);
 #endif
