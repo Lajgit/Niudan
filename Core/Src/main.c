@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "iwdg.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -89,6 +90,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_SPI2_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_USART1_UART_Init();
@@ -96,7 +98,7 @@ int main(void)
   MX_IWDG_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* 中文注释：按当前扭蛋机原理图，仅初始化实际使用的外设；旧弹界灯效、SD、UART5相关外设不再启动。 */
+  /* 中文注释：按当前扭蛋机原理图，仅初始化实际使用的外设；SPI2用于本板数码管。 */
   Main_Init();
   /* USER CODE END 2 */
 
@@ -178,7 +180,7 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
+  * @brief  Reports the name of the source file and source line number
   *         where the assert_param error has occurred.
   * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
