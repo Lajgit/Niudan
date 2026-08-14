@@ -2,57 +2,133 @@
 #include "CommTask.h"
 #include "port_key.h"
 
-/* 中文注释：新扭蛋机原理图不再有旧弹界19路球洞检测，仅保留PB6/PB7/PD0三路面板输入。 */
-static GPIO_TypeDef *Keyboard_Port[] = {KeyBoard1_GPIO_Port, KeyBoard2_GPIO_Port, KeyBoard3_GPIO_Port};
-static uint32_t Keyboard_Pin[] = {KeyBoard1_Pin, KeyBoard2_Pin, KeyBoard3_Pin};
+#define SETTING_BUTTON_COUNT 3U
+#define PLAY_BUTTON_COUNT 3U
 
-Key_HandleTypeDef keyboard[3];
-Key_HandleTypeDef *keyboard_list[3];
+/*
+ * 中文注释：后台设置按键按原理图K1/K2/K3编号：
+ * K1=PB6，K2=PB7，K3=PD0，对外协议编号依次为0x01~0x03。
+ */
+static GPIO_TypeDef *SettingButton_Port[SETTING_BUTTON_COUNT] = {
+    KeyBoard3_GPIO_Port,
+    KeyBoard2_GPIO_Port,
+    KeyBoard1_GPIO_Port,
+};
+static uint32_t SettingButton_Pin[SETTING_BUTTON_COUNT] = {
+    KeyBoard3_Pin,
+    KeyBoard2_Pin,
+    KeyBoard1_Pin,
+};
+
+/* 中文注释：外接游玩按键1~3分别接PD8/PD9/PD10，协议功能码为0x03。 */
+static GPIO_TypeDef *PlayButton_Port[PLAY_BUTTON_COUNT] = {
+    PlayButton1_GPIO_Port,
+    PlayButton2_GPIO_Port,
+    PlayButton3_GPIO_Port,
+};
+static uint32_t PlayButton_Pin[PLAY_BUTTON_COUNT] = {
+    PlayButton1_Pin,
+    PlayButton2_Pin,
+    PlayButton3_Pin,
+};
+
+static Key_HandleTypeDef setting_button[SETTING_BUTTON_COUNT];
+static Key_HandleTypeDef *setting_button_list[SETTING_BUTTON_COUNT];
+static Key_HandleTypeDef play_button[PLAY_BUTTON_COUNT];
+static Key_HandleTypeDef *play_button_list[PLAY_BUTTON_COUNT];
 
 extern Tx_HandleTypeDef Tx1;
 
-static void Keyboard_ShortCallback(uint16_t key_id)
+/*==============================后台设置按键==============================*/
+static void SettingButton_ShortCallback(uint16_t key_id)
 {
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1, 0x01);
+    /* 中文注释：0x04=设置按键，Data4=编号，ExpandCode=0x01短按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, 0x01);
 }
 
-static void Keyboard_LongCallback(uint16_t key_id)
+static void SettingButton_LongCallback(uint16_t key_id)
 {
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1, 0x02);
+    /* 中文注释：ExpandCode=0x02长按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, 0x02);
 }
 
-static void Keyboard_ReleaseCallback(uint16_t key_id)
+static void SettingButton_ReleaseCallback(uint16_t key_id)
 {
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1, 0x03);
+    /* 中文注释：ExpandCode=0x03松开。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, 0x03);
 }
 
-void Keyboard_Init(void)
+static void SettingButton_Init(void)
 {
     Key_InitTypeDef init;
-    for (uint16_t i = 0; i < 3; i++)
+
+    for (uint16_t i = 0; i < SETTING_BUTTON_COUNT; i++)
     {
-        init.short_callback = Keyboard_ShortCallback;
-        init.long_callback = Keyboard_LongCallback;
-        init.release_callback = Keyboard_ReleaseCallback;
+        init.short_callback = SettingButton_ShortCallback;
+        init.long_callback = SettingButton_LongCallback;
+        init.release_callback = SettingButton_ReleaseCallback;
         init.debounce_time = KEY_DEBOUNCE_TIME;
         init.longpress_time = KEY_LONG_PRESS_TIME;
         init.trigger_frequnecy = 1;
         init.trigger_level = GPIO_PIN_RESET;
-
         init.key_id = i;
-        init.port = Keyboard_Port[i];
-        init.pin = Keyboard_Pin[i];
-        Key_Init(&keyboard[i], init);
-        keyboard_list[i] = &keyboard[i];
+        init.port = SettingButton_Port[i];
+        init.pin = SettingButton_Pin[i];
+
+        Key_Init(&setting_button[i], init);
+        setting_button_list[i] = &setting_button[i];
+    }
+}
+
+/*==============================外接游玩按键==============================*/
+static void PlayButton_ShortCallback(uint16_t key_id)
+{
+    /* 中文注释：0x03=拍拍按键，Data4=编号，ExpandCode=0x01短按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, 0x01);
+}
+
+static void PlayButton_LongCallback(uint16_t key_id)
+{
+    /* 中文注释：ExpandCode=0x02长按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, 0x02);
+}
+
+static void PlayButton_ReleaseCallback(uint16_t key_id)
+{
+    /* 中文注释：ExpandCode=0x03松开。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, 0x03);
+}
+
+static void PlayButton_Init(void)
+{
+    Key_InitTypeDef init;
+
+    for (uint16_t i = 0; i < PLAY_BUTTON_COUNT; i++)
+    {
+        init.short_callback = PlayButton_ShortCallback;
+        init.long_callback = PlayButton_LongCallback;
+        init.release_callback = PlayButton_ReleaseCallback;
+        init.debounce_time = KEY_DEBOUNCE_TIME;
+        init.longpress_time = KEY_LONG_PRESS_TIME;
+        init.trigger_frequnecy = 1;
+        init.trigger_level = GPIO_PIN_RESET;
+        init.key_id = i;
+        init.port = PlayButton_Port[i];
+        init.pin = PlayButton_Pin[i];
+
+        Key_Init(&play_button[i], init);
+        play_button_list[i] = &play_button[i];
     }
 }
 
 void KeyAll_Init(void)
 {
-    Keyboard_Init();
+    SettingButton_Init();
+    PlayButton_Init();
 }
 
 void Key_Task(void)
 {
-    Key_Scan(keyboard_list, 3);
+    Key_Scan(setting_button_list, SETTING_BUTTON_COUNT);
+    Key_Scan(play_button_list, PLAY_BUTTON_COUNT);
 }
