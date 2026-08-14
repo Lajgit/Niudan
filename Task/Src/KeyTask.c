@@ -14,7 +14,8 @@ static GPIO_TypeDef *SettingButton_Port[SETTING_BUTTON_COUNT] = {
     KeyBoard2_GPIO_Port,
     KeyBoard1_GPIO_Port,
 };
-static uint32_t SettingButton_Pin[SETTING_BUTTON_COUNT] = {
+/* 中文注释：数组名避免与main.h中旧的SettingButton_Pin宏重名。 */
+static uint32_t SettingButton_Pins[SETTING_BUTTON_COUNT] = {
     KeyBoard3_Pin,
     KeyBoard2_Pin,
     KeyBoard1_Pin,
@@ -26,7 +27,7 @@ static GPIO_TypeDef *PlayButton_Port[PLAY_BUTTON_COUNT] = {
     PlayButton2_GPIO_Port,
     PlayButton3_GPIO_Port,
 };
-static uint32_t PlayButton_Pin[PLAY_BUTTON_COUNT] = {
+static uint32_t PlayButton_Pins[PLAY_BUTTON_COUNT] = {
     PlayButton1_Pin,
     PlayButton2_Pin,
     PlayButton3_Pin,
@@ -73,7 +74,7 @@ static void SettingButton_Init(void)
         init.trigger_level = GPIO_PIN_RESET;
         init.key_id = i;
         init.port = SettingButton_Port[i];
-        init.pin = SettingButton_Pin[i];
+        init.pin = SettingButton_Pins[i];
 
         Key_Init(&setting_button[i], init);
         setting_button_list[i] = &setting_button[i];
@@ -114,7 +115,7 @@ static void PlayButton_Init(void)
         init.trigger_level = GPIO_PIN_RESET;
         init.key_id = i;
         init.port = PlayButton_Port[i];
-        init.pin = PlayButton_Pin[i];
+        init.pin = PlayButton_Pins[i];
 
         Key_Init(&play_button[i], init);
         play_button_list[i] = &play_button[i];
