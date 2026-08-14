@@ -26,6 +26,20 @@ static inline uint32_t Get_SysTime(void)
 
 static void Ctrl_HoolleMotor(Motor_Hoolle *Motor, uint16_t speed, uint8_t dir, uint32_t timeout, uint32_t reverse_time, uint8_t retry_times, void (*Timeout_callbcak)(void))
 {
+    /*
+     * 中文注释：手动常转模式独立于正常出货状态机。
+     * 开启后不检查Hoolle_num，不进入超时、反转和重试逻辑，直到收到关闭命令。
+     */
+    if (Motor->ManualRun != 0U)
+    {
+        if (Motor->Motor.state != DEVICE_STATE_BUSY)
+        {
+            Motor->Motor.SetSpeed(&Motor->Motor, speed, dir);
+            Motor->Motor.state = DEVICE_STATE_BUSY;
+        }
+        return;
+    }
+
     // 开机吐珠电机
     if (Motor->Motor.state == DEVICE_STATE_START)
     {
@@ -170,6 +184,15 @@ static void CardMotorTimeout_callback(void)
 
 void Hoolle_Output(Motor_Hoolle *Motor, uint16_t num)
 {
+    /* 中文注释：手动常转期间忽略所有按数量出货命令，并保持自动出货状态清零。 */
+    if (Motor->ManualRun != 0U)
+    {
+        Motor->Hoolle_num = 0U;
+        Motor->RetryCount = 0U;
+        Motor->ClearMode = 0U;
+        return;
+    }
+
     Motor->Hoolle_num += num;
     if (Motor->Hoolle_num != 0)
     {
@@ -177,6 +200,44 @@ void Hoolle_Output(Motor_Hoolle *Motor, uint16_t num)
         Motor->Motor.runtick = Get_SysTime();
         Motor->RetryCount = 0;
     }
+}
+
+/**
+ * @brief 控制钢珠/吐珠电机手动常转
+ * @param enable 0=立即关闭，1=开启并持续正转
+ *
+ * 中文注释：该模式专用于0x21电机开关协议。
+ * 开启时清除原有数量、清空模式和重试状态，不受光眼计数和超时状态机影响；
+ * 关闭时立即停止电机，并恢复为正常按数量出货模式。
+ */
+void SteelBall_MotorSwitch(uint8_t enable)
+{
+    if (enable != 0U)
+    {
+        Motor_Hoolle1.Hoolle_num = 0U;
+        Motor_Hoolle1.RetryCount = 0U;
+        Motor_Hoolle1.ClearMode = 0U;
+        Motor_Hoolle1.ManualRun = 1U;
+
+        /* 清除自动出货模式可能尚未处理的剩余数量和超时消息。 */
+        EventGroupClearBits(
+            &Mesg_event,
+            MesgEvent_RemainingSteelBall | MesgEvent_SteelBallOutputTimeout);
+
+        Motor_Hoolle1.Motor.SetSpeed(
+            &Motor_Hoolle1.Motor,
+            HoolleMotor_Speed,
+            HoolleMotor_Dir);
+        Motor_Hoolle1.Motor.state = DEVICE_STATE_BUSY;
+        return;
+    }
+
+    Motor_Hoolle1.ManualRun = 0U;
+    Motor_Hoolle1.Hoolle_num = 0U;
+    Motor_Hoolle1.RetryCount = 0U;
+    Motor_Hoolle1.ClearMode = 0U;
+    Motor_Hoolle1.Motor.Stop(&Motor_Hoolle1.Motor);
+    Motor_Hoolle1.Motor.state = DEVICE_STATE_IDLE;
 }
 
 void Card_Output(Motor_Card *Switch, uint16_t num)
@@ -206,7 +267,8 @@ void SteelBall_OutputEverySecond(void)
         return;
     }
 
-    if (Motor_Hoolle1.Motor.state != DEVICE_STATE_IDLE ||
+    if (Motor_Hoolle1.ManualRun != 0U ||
+        Motor_Hoolle1.Motor.state != DEVICE_STATE_IDLE ||
         Motor_Hoolle1.Hoolle_num != 0U)
     {
         return;
@@ -236,6 +298,8 @@ void Device_Init(void)
     Motor_Hoolle2.RetryCount = 0;
     Motor_Hoolle1.ClearMode = 0;
     Motor_Hoolle2.ClearMode = 0;
+    Motor_Hoolle1.ManualRun = 0;
+    Motor_Hoolle2.ManualRun = 0;
     Card.Card_num = 0;
 }
 
