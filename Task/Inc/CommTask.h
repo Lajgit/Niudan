@@ -66,7 +66,7 @@
 #define t_LightEye 0x0E            // 光眼
 #define t_Encoder 0x0F             // 编码器
 #define t_ChannelRequest 0x10      // 击中通道位置反馈
-#define t_ClearRemainMesg 0x11     // 清除剩余珠子消息
+#define t_ClearRemainMesg 0x11     // 清除剩余卡片提示
 #define t_IntoHigherStage 0x12     // 进入高级后台
 
 /// 主板接收到安卓的消息功能码
@@ -82,7 +82,7 @@
 #define r_LittleGameResult 0x09       // 小游戏输赢结果（旧协议保留，当前未处理）
 #define r_ButtonLight 0x0A            // 按键灯（旧协议保留，当前未处理）
 #define r_OutputAllHoolle 0x0B        // 清空扭蛋/钢珠
-#define r_OutputRemainingItem 0x0C    // 继续剩余物品输出
+#define r_OutputRemainingItem 0x0C    // 继续当前扭蛋/卡片剩余输出
 #define r_ResumeDefultSetting 0x0D    // 恢复默认设置
 #define r_SaveSetting 0x0E            // 保存设置
 #define r_HoleValveTrigger 0x0F       // 洞内电磁阀触发（旧协议保留，当前未处理）
