@@ -3,60 +3,25 @@
 #include "MainTask.h"
 #include "KeyTask.h"
 #include "CommTask.h"
-#include "LightTask.h"
 #include "tim.h"
 #include "port_device.h"
 #include "port_event.h"
 #include "string.h"
 
-#define DoorServoTimeout_time 200
 #define STEEL_BALL_OUTPUT_INTERVAL_MS 500U
-
-//测试舵机2
-#define SERVO2_CLOSE_ANGLE       4U
-#define SERVO2_OPEN_ANGLE        65U
-#define SERVO2_TEST_INTERVAL_MS  1000U
 
 Motor_Hoolle Motor_Hoolle1, Motor_Hoolle2;
 Motor_Card Card;
-servo_t Servo1, Servo2, Servo3;
+servo_t Servo1;
 Switch_Valve Lock_Valve;
-
-static uint32_t DoorServoRuntick = 0;
-static uint8_t DoorServoRunning = 0;
 
 extern Tx_HandleTypeDef Tx1;
 extern Scene_t Scene;
 extern Event_Handle_t Mesg_event;
 extern Event_Handle_t Event;
-extern Light_t Light;
 static inline uint32_t Get_SysTime(void)
 {
     return HAL_GetTick();
-}
-
-static void DoorServo_SetAngle(void *servo, uint16_t angle)
-{
-    servo_t *Servo = (servo_t *)servo;
-
-    Servo->angle = angle;
-    Servo_SetAngle(Servo->htim, Servo->channel, Servo->angle);
-
-    HAL_TIM_PWM_Start(Servo2.htim, Servo2.channel);
-    HAL_TIM_PWM_Start(Servo3.htim, Servo3.channel);
-
-    DoorServoRuntick = Get_SysTime();
-    DoorServoRunning = 1;
-}
-
-static void Ctrl_DoorServo(void)
-{
-    if (DoorServoRunning != 0 && Get_SysTime() - DoorServoRuntick >= DoorServoTimeout_time)
-    {
-        HAL_TIM_PWM_Stop(Servo2.htim, Servo2.channel);
-        HAL_TIM_PWM_Stop(Servo3.htim, Servo3.channel);
-        DoorServoRunning = 0;
-    }
 }
 
 static void Ctrl_HoolleMotor(Motor_Hoolle *Motor, uint16_t speed, uint8_t dir, uint32_t timeout, uint32_t reverse_time, uint8_t retry_times, void (*Timeout_callbcak)(void))
@@ -93,7 +58,7 @@ static void Ctrl_HoolleMotor(Motor_Hoolle *Motor, uint16_t speed, uint8_t dir, u
                 Motor->Motor.state = DEVICE_STATE_IDLE;
                 Motor->Motor.Stop(&Motor->Motor);
 
-                 /* 清珠空仓结束，清除0xFFFF剩余计数 */
+                /* 清珠空仓结束，清除0xFFFF剩余计数 */
                 if (Motor->ClearMode != 0)
                 {
                     Motor->Hoolle_num = 0;
@@ -196,10 +161,6 @@ static void CardMotorTimeout_callback(void)
     EventGroupSetBits(&Mesg_event, MesgEvent_CardOutputTimeout);
 }
 
-static void ValveTimeout_callback(void)
-{
-}
-
 void Hoolle_Output(Motor_Hoolle *Motor, uint16_t num)
 {
     Motor->Hoolle_num += num;
@@ -254,12 +215,12 @@ void Device_Init(void)
     Device_Motor_Init(&Motor_Hoolle1.Motor, &htim1, TIM_CHANNEL_1, &htim1, TIM_CHANNEL_2);
     Device_Motor_Init(&Motor_Hoolle2.Motor, &htim1, TIM_CHANNEL_3, &htim1, TIM_CHANNEL_4);
     Device_Switch_Init(&Card.Switch, CardOutput_GPIO_Port, CardOutput_Pin, GPIO_PIN_SET);
-    Device_Switch_Init(&Lock_Valve.Switch, GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+
+    /* 中文注释：新扭蛋机原理图电子锁控制脚为PA0，旧弹界PB1锁控已删除。 */
+    Device_Switch_Init(&Lock_Valve.Switch, GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+
+    /* 中文注释：新原理图仅保留舵机1（PA2/TIM2_CH3），删除旧弹界舵机2和舵机3。 */
     Device_Servo_Init(&Servo1, &htim2, TIM_CHANNEL_3, 45, 135, 90);
-    Device_Servo_Init(&Servo2, &htim2, TIM_CHANNEL_1, 0, 180, 5);
-    Device_Servo_Init(&Servo3, &htim2, TIM_CHANNEL_2, 0, 180, 180);
-    Servo2.SetAngle = DoorServo_SetAngle;
-    Servo3.SetAngle = DoorServo_SetAngle;
     HAL_TIM_Base_Start(&htim7);
 
     Motor_Hoolle1.Hoolle_num = 0;
@@ -269,10 +230,7 @@ void Device_Init(void)
     Motor_Hoolle1.ClearMode = 0;
     Motor_Hoolle2.ClearMode = 0;
     Card.Card_num = 0;
-    Servo2.SetAngle(&Servo2, 5);
-    Servo3.SetAngle(&Servo3, 115);
 }
-
 
 void Servo_AutoRun(servo_t *Servo, uint32_t time)
 {
@@ -315,50 +273,6 @@ void Servo_AutoRun(servo_t *Servo, uint32_t time)
     }
 }
 
-/**
- * @brief 舵机2开关门循环测试
- *
- * 初始状态为关门，每隔1秒切换一次：
- * 关门4° -> 开门65° -> 关门4°。
- */
-static void Servo2_OpenCloseTest(void)
-{
-    static uint32_t last_tick = 0U;
-    static uint8_t initialized = 0U;
-    static uint8_t is_open = 0U;
-
-    uint32_t now = Get_SysTime();
-
-    /* 第一次进入时，明确设置为关门位置 */
-    if (initialized == 0U)
-    {
-        initialized = 1U;
-        is_open = 0U;
-        last_tick = now;
-
-        Servo2.SetAngle(&Servo2, SERVO2_CLOSE_ANGLE);
-        return;
-    }
-
-    if ((uint32_t)(now - last_tick) >= SERVO2_TEST_INTERVAL_MS)
-    {
-        last_tick = now;
-
-        if (is_open == 0U)
-        {
-            /* 开门 */
-            Servo2.SetAngle(&Servo2, SERVO2_OPEN_ANGLE);
-            is_open = 1U;
-        }
-        else
-        {
-            /* 关门 */
-            Servo2.SetAngle(&Servo2, SERVO2_CLOSE_ANGLE);
-            is_open = 0U;
-        }
-    }
-}
-
 void CtrlTask(void)
 {
     // SteelBall_OutputEverySecond();//每秒吐一颗钢珠
@@ -367,9 +281,7 @@ void CtrlTask(void)
     Ctrl_HoolleMotor(&Motor_Hoolle2, HoolleMotor2_Speed, HoolleMotor_Dir, HoolleMotorTimeout_time, HoolleMotorReverse_Time, HoolleMotorRetry_Times, HoolleMotorTimeout_callback);
     /*==============卡片机控制===============*/
     Ctrl_CardMotor(&Card, CardMotorTimeout_time, CardMotorTimeout_callback);
-    /*==============电磁阀控制===============*/
+    /*==============电子锁控制===============*/
     Ctrl_Valve(&Lock_Valve, ValveTimeout_time, NULL);
-    // Servo2_OpenCloseTest();//测试舵机2开关门循环
-    Ctrl_DoorServo();
     // Servo_AutoRun(&Servo1, 75);//舵机1自动摆动
 }
