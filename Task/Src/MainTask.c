@@ -39,10 +39,13 @@ void Main_Init(void)
     Device_Init();
     HoolleInput_FilterInit();
     KeyAll_Init();
+
+    /* 中文注释：数码管属于新扭蛋机控制板本地硬件，初始化SPI2移位输出并显示0。 */
+    DigitalTubeTask_Init();
+
     /* 中文注释：新原理图没有旧弹界球盘WS2812和呼吸灯，本地LightTask不再初始化。 */
     Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x04, Setting.Ctrl_Lightness, 0x00); // 控台亮度
     Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x03, 0x00, 0x00);                   // 控台灯效
-    // DigitalTubeTask_Init();
 }
 
 void Main_Task(void)
@@ -58,6 +61,8 @@ void Main_Task(void)
     HAL_IWDG_Refresh(&hiwdg);
     Mesg_Task();
     HAL_IWDG_Refresh(&hiwdg);
-    // DigitalTube_Task();
+
+    /* 中文注释：保持现有数码管任务刷新节奏，避免后续显示扩展时改变原工程行为。 */
+    DigitalTube_Task();
     SystemLight_Task();
 }
