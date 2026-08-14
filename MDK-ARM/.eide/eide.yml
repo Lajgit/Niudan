@@ -116,8 +116,7 @@ targets:
         - .cmsis/include
         - RTE/_Niudan
       libList: []
-    excludeList:
-      - <virtual_root>/Task/DigitalTubeTask.c
+    excludeList: []
     settings:
       debugger: cortex-debug
     toolchain: AC5
