@@ -108,7 +108,8 @@ static void Set_Num(void *self, uint8_t position, uint32_t data, uint8_t datasiz
 
 /*
  * @brief 刷新数码管缓存到外部移位寄存器
- * @note 先移位，再给RCLK一个上升沿锁存，匹配J6的SER1/SRCLK1/RCLK1连接。
+ * @note RCLK1经过74HC14反相：MCU侧保持高电平时，SM16306的LE为低并保持旧数据；
+ *       SPI发送完成后给RCLK1一个低脉冲，对应SM16306的LE高脉冲完成锁存。
  */
 static void Refresh(void *self)
 {
@@ -118,16 +119,16 @@ static void Refresh(void *self)
         return;
 
     if (DigitalTube->LE_GPIO != NULL && DigitalTube->LE_Pin != 0)
-        HAL_GPIO_WritePin(DigitalTube->LE_GPIO, DigitalTube->LE_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(DigitalTube->LE_GPIO, DigitalTube->LE_Pin, GPIO_PIN_SET);
 
     HAL_SPI_Transmit(DigitalTube->hspi, DigitalTube->Buffer, DigitalTube->bit_num, 100);
 
     if (DigitalTube->LE_GPIO != NULL && DigitalTube->LE_Pin != 0)
     {
-        /* 中文注释：RCLK上升沿把SPI移入的数据锁存到数码管输出端。 */
-        HAL_GPIO_WritePin(DigitalTube->LE_GPIO, DigitalTube->LE_Pin, GPIO_PIN_SET);
-        __NOP();
+        /* 中文注释：RCLK1低脉冲经74HC14反相后形成SM16306的LE高脉冲，锁存32位显示数据。 */
         HAL_GPIO_WritePin(DigitalTube->LE_GPIO, DigitalTube->LE_Pin, GPIO_PIN_RESET);
+        __NOP();
+        HAL_GPIO_WritePin(DigitalTube->LE_GPIO, DigitalTube->LE_Pin, GPIO_PIN_SET);
     }
 }
 
