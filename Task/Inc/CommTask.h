@@ -28,15 +28,35 @@
 /// APP写入RTC备份寄存器，请求Bootloader进入串口升级
 #define OTA_REQUEST_MAGIC 0x424F5441U // ASCII "BOTA"
 
-/// 球盘发送给安卓的消息功能码
+/*
+ * 中文注释：出货类命令和0x07出货超时统一使用以下类型值。
+ * 0x00=扭蛋（Motor_Hoolle2），0x01=钢珠（Motor_Hoolle1）。
+ */
+#define HOOLLE_TYPE_EGG 0x00U
+#define HOOLLE_TYPE_STEEL_BALL 0x01U
+
+/*
+ * 中文注释：0x05剩余待出数量为兼容已有安卓协议保留卡片0x01：
+ * 0x00=扭蛋，0x01=卡片，0x02=钢珠。
+ */
+#define REMAIN_TYPE_EGG 0x00U
+#define REMAIN_TYPE_CARD 0x01U
+#define REMAIN_TYPE_STEEL_BALL 0x02U
+
+/* 中文注释：0x03/0x04按键消息的ExpandCode定义。 */
+#define KEY_EVENT_SHORT 0x01U
+#define KEY_EVENT_LONG 0x02U
+#define KEY_EVENT_RELEASE 0x03U
+
+/// 主板发送给安卓的消息功能码
 #define t_VersionRequest 0x00      // 版本请求应答
 #define t_HoolleInput 0x01         // 投入弹珠
 #define t_CoinInput 0x02           // 投入硬币
 #define t_Button 0x03              // 拍拍按键
 #define t_SettingButton 0x04       // 设置按键
-#define t_RemainingHoolle 0x05     // 剩余珠子数
+#define t_RemainingHoolle 0x05     // 剩余待出数量，ExpandCode区分扭蛋/卡片/钢珠
 #define t_WinOrLoss 0x06           // 游戏结果
-#define t_HoolleOutputTimeOut 0x07 // 珠子输出超时
+#define t_HoolleOutputTimeOut 0x07 // 出货超时，ExpandCode区分扭蛋/钢珠
 #define t_CardOutputTimeOut 0x08   // 卡片输出超时
 #define t_NFCEnterSetting 0x09     // NFC进入后台
 #define t_UnlockCardStatus 0x0A    // 解锁卡片状态
@@ -49,36 +69,36 @@
 #define t_ClearRemainMesg 0x11     // 清除剩余珠子消息
 #define t_IntoHigherStage 0x12     // 进入高级后台
 
-/// 球盘接收到安卓的消息功能码
+/// 主板接收到安卓的消息功能码
 #define r_GetVersion 0x00             // 获取版本信息
-#define r_HoolleOutput 0x01           // 珠子输出
+#define r_HoolleOutput 0x01           // 扭蛋/钢珠输出
 #define r_CardOutput 0x02             // 卡片输出
-#define r_ValveTrigger 0x03           // 触发电磁阀
-#define r_BoardLightness 0x04         // 球盘亮度
-#define r_LightBoardLightness 0x05    // 灯板亮度
-#define r_LightBeltLightness 0x06     // 灯带亮度
-#define r_SceneChange 0x07            // 场景编号
-#define r_WinChannel 0x08             // 中奖通道
-#define r_LittleGameResult 0x09       // 小游戏输赢结果
-#define r_ButtonLight 0x0A            // 按键灯
-#define r_OutputAllHoolle 0x0B        // 清珠
-#define r_OutputRemainingItem 0x0C    // 吐出剩余物品
+#define r_ValveTrigger 0x03           // 触发电磁阀（旧协议保留，当前未处理）
+#define r_BoardLightness 0x04         // 球盘亮度（旧协议保留，当前未处理）
+#define r_LightBoardLightness 0x05    // 灯板亮度（旧协议保留，当前未处理）
+#define r_LightBeltLightness 0x06     // 灯带亮度（旧协议保留，当前未处理）
+#define r_SceneChange 0x07            // 场景编号（旧协议保留，当前未处理）
+#define r_WinChannel 0x08             // 中奖通道（旧协议保留，当前未处理）
+#define r_LittleGameResult 0x09       // 小游戏输赢结果（旧协议保留，当前未处理）
+#define r_ButtonLight 0x0A            // 按键灯（旧协议保留，当前未处理）
+#define r_OutputAllHoolle 0x0B        // 清空扭蛋/钢珠
+#define r_OutputRemainingItem 0x0C    // 继续剩余物品输出
 #define r_ResumeDefultSetting 0x0D    // 恢复默认设置
 #define r_SaveSetting 0x0E            // 保存设置
-#define r_HoleValveTrigger 0x0F       // 洞内电磁阀触发
-#define r_Unlock 0x10                 // 已开锁
-#define r_ResumeBoundCard 0x11        // 重新绑卡
-#define r_WirelessMasterSetting 0x12  // 无线通信主从设置
-#define r_WirelessChannelSetting 0x13 // 无线通信信道设置
-#define r_ServoControl 0x14           // 舵机控制
-#define r_LightControl 0x15           // 灯控制
-#define r_DigitalTubeData 0x16        // 数字数据
+#define r_HoleValveTrigger 0x0F       // 洞内电磁阀触发（旧协议保留，当前未处理）
+#define r_Unlock 0x10                 // 开锁
+#define r_ResumeBoundCard 0x11        // 重新绑卡（旧协议保留，当前未处理）
+#define r_WirelessMasterSetting 0x12  // 无线通信主从设置（旧协议保留，当前未处理）
+#define r_WirelessChannelSetting 0x13 // 无线通信信道设置（旧协议保留，当前未处理）
+#define r_ServoControl 0x14           // 舵机控制（旧协议保留，当前未处理）
+#define r_LightControl 0x15           // 灯控制（旧协议保留，当前未处理）
+#define r_DigitalTubeData 0x16        // 数码管显示数据
 #define r_CtrlLightness 0x18          // 控台亮度
 #define r_ServoReset 0x20             // 舵机归零
 #define r_StopAllDevice 0xFF          // 停止所有输出
 #define r_SystemReset 0xF0            // 系统复位/进入Bootloader
 
-/// 接收消息结构体(新球盘)
+/// 接收消息结构体
 typedef struct
 {
     uint8_t Head;
@@ -97,15 +117,12 @@ typedef struct
     uint8_t Tail;
 } Mesg_TypeDef;
 
-///
 uint8_t Comm_SendMesg_FillData(Tx_HandleTypeDef *Tx, uint8_t code_1, uint8_t code_2, uint32_t data, uint8_t expandCode);
 uint8_t Comm_SendMesg_FillData_withResend(Tx_HandleTypeDef *Tx, uint8_t code_1, uint8_t code_2, uint32_t data, uint8_t expandCode, ListHandle_t *List);
 
-//
 void Resend_Task(void);
 void MesgDeal_Task(void);
 
-///
 void CommInit(void);
 void CommTask(void);
 
