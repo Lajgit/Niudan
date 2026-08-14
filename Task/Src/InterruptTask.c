@@ -130,14 +130,15 @@ static void Hoolle_1_Output_IRQ(void)
 
     if (LowCount > HOOLLE_LOW_MIN_COUNT)
     {
-        EventGroupSetBits(
-            &Mesg_event,
-            MesgEvent_RemainingHoolle);
-
         if (Motor_Hoolle1.Hoolle_num > 0U)
         {
             Motor_Hoolle1.Hoolle_num--;
             Motor_Hoolle1.RetryCount = 0;
+
+            /* 中文注释：Motor_Hoolle1为钢珠通道，成功出一颗后上报钢珠剩余待出数量。 */
+            EventGroupSetBits(
+                &Mesg_event,
+                MesgEvent_RemainingSteelBall);
 
             if (Motor_Hoolle1.Hoolle_num == 0U &&
                 Motor_Hoolle1.Motor.state != DEVICE_STATE_IDLE)
@@ -199,6 +200,11 @@ static void Hoolle_2_Output_IRQ(void)
             Motor_Hoolle2.Hoolle_num--;
             Motor_Hoolle2.RetryCount = 0;
 
+            /* 中文注释：Motor_Hoolle2为扭蛋通道，成功出一颗后上报扭蛋剩余待出数量。 */
+            EventGroupSetBits(
+                &Mesg_event,
+                MesgEvent_RemainingEgg);
+
             if (Motor_Hoolle2.Hoolle_num == 0U &&
                 Motor_Hoolle2.Motor.state != DEVICE_STATE_IDLE)
             {
@@ -256,19 +262,5 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     case CardFeedback_Pin:
         CardOutput_IRQ();
         break;
-    }
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart == Rx1.Handle.huart)
-    {
-        Rx1.Handle.RingBuf.f_WriteByte(&Rx1.Handle.RingBuf, Rx1.Handle.temp_data);
-        HAL_UART_Receive_IT(huart, &Rx1.Handle.temp_data, 1);
-    }
-    if (huart == Rx3.Handle.huart)
-    {
-        Rx3.Handle.RingBuf.f_WriteByte(&Rx3.Handle.RingBuf, Rx3.Handle.temp_data);
-        HAL_UART_Receive_IT(huart, &Rx3.Handle.temp_data, 1);
     }
 }
