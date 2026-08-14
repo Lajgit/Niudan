@@ -22,7 +22,6 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "LightTask.h"
 #include "InterruptTask.h"
 /* USER CODE END Includes */
 
@@ -62,7 +61,7 @@ extern DMA_HandleTypeDef hdma_tim3_ch2;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
-extern Light_t Light1,Light2;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -194,7 +193,7 @@ void SysTick_Handler(void)
 
   HoolleInput_Scan1ms();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  LightEffectTimer_ISR();
+  /* 中文注释：旧弹界灯效1ms中断任务已删除。 */
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -202,7 +201,7 @@ void SysTick_Handler(void)
 /* STM32F4xx Peripheral Interrupt Handlers                                    */
 /* Add here the Interrupt Handlers for the used peripherals.                  */
 /* For the available peripheral interrupt handler names,                      */
-/* please refer to the startup file (startup_stm32f4xx.s).                    */
+/* please refer to the startup file (startup_stm32f407xx.s).                  */
 /******************************************************************************/
 
 /**
@@ -271,7 +270,7 @@ void DMA1_Stream4_IRQHandler(void)
   /* USER CODE END DMA1_Stream4_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_tim3_ch1_trig);
   /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-  RGB_FinishCallback(&Light1,&hdma_tim3_ch1_trig);
+  /* 中文注释：旧WS2812完成回调已删除。 */
   /* USER CODE END DMA1_Stream4_IRQn 1 */
 }
 
@@ -285,7 +284,7 @@ void DMA1_Stream5_IRQHandler(void)
   /* USER CODE END DMA1_Stream5_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_tim3_ch2);
   /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
-  RGB_FinishCallback(&Light2,&hdma_tim3_ch2);
+  /* 中文注释：旧WS2812完成回调已删除。 */
   /* USER CODE END DMA1_Stream5_IRQn 1 */
 }
 
