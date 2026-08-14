@@ -61,8 +61,8 @@ void MX_GPIO_Init(void)
   /* 中文注释：新扭蛋机原理图中电子锁控制为 PA0，默认输出低电平保持关闭。 */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 
-  /* 中文注释：数码管RCLK默认低电平；SEG_OE先拉高关闭输出，首帧写入后再使能。 */
-  HAL_GPIO_WritePin(Tube_RCLK_GPIO_Port, Tube_RCLK_Pin, GPIO_PIN_RESET);
+  /* 中文注释：RCLK1经过74HC14反相，MCU侧默认拉高可使SM16306的LE保持低电平锁存；SEG_OE先拉高关闭输出。 */
+  HAL_GPIO_WritePin(Tube_RCLK_GPIO_Port, Tube_RCLK_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(Tube_OE_GPIO_Port, Tube_OE_Pin, GPIO_PIN_SET);
 
   /* 进珠光眼由SysTick软件滤波扫描，不再配置无效的EXTI2。 */
