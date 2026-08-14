@@ -43,20 +43,20 @@ extern Tx_HandleTypeDef Tx1;
 /*==============================后台设置按键==============================*/
 static void SettingButton_ShortCallback(uint16_t key_id)
 {
-    /* 中文注释：0x04=设置按键，Data4=编号，ExpandCode=0x01短按。 */
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, 0x01);
+    /* 中文注释：0x04=设置按键，Data4=编号，ExpandCode=短按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, KEY_EVENT_SHORT);
 }
 
 static void SettingButton_LongCallback(uint16_t key_id)
 {
-    /* 中文注释：ExpandCode=0x02长按。 */
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, 0x02);
+    /* 中文注释：ExpandCode=长按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, KEY_EVENT_LONG);
 }
 
 static void SettingButton_ReleaseCallback(uint16_t key_id)
 {
-    /* 中文注释：ExpandCode=0x03松开。 */
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, 0x03);
+    /* 中文注释：ExpandCode=松开。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_SettingButton, key_id + 1U, KEY_EVENT_RELEASE);
 }
 
 static void SettingButton_Init(void)
@@ -84,20 +84,20 @@ static void SettingButton_Init(void)
 /*==============================外接游玩按键==============================*/
 static void PlayButton_ShortCallback(uint16_t key_id)
 {
-    /* 中文注释：0x03=拍拍按键，Data4=编号，ExpandCode=0x01短按。 */
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, 0x01);
+    /* 中文注释：0x03=拍拍按键，Data4=编号，ExpandCode=短按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, KEY_EVENT_SHORT);
 }
 
 static void PlayButton_LongCallback(uint16_t key_id)
 {
-    /* 中文注释：ExpandCode=0x02长按。 */
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, 0x02);
+    /* 中文注释：ExpandCode=长按。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, KEY_EVENT_LONG);
 }
 
 static void PlayButton_ReleaseCallback(uint16_t key_id)
 {
-    /* 中文注释：ExpandCode=0x03松开。 */
-    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, 0x03);
+    /* 中文注释：ExpandCode=松开。 */
+    Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, key_id + 1U, KEY_EVENT_RELEASE);
 }
 
 static void PlayButton_Init(void)
