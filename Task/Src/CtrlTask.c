@@ -151,9 +151,16 @@ static void Ctrl_Valve(Switch_Valve *Valve, uint32_t timeout, void (*Timeout_cal
     }
 }
 
-static void HoolleMotorTimeout_callback(void)
+static void SteelBallMotorTimeout_callback(void)
 {
-    EventGroupSetBits(&Mesg_event, MesgEvent_HoolleOutputTimeout);
+    /* 中文注释：Motor_Hoolle1固定为钢珠通道，超时事件单独上报。 */
+    EventGroupSetBits(&Mesg_event, MesgEvent_SteelBallOutputTimeout);
+}
+
+static void EggMotorTimeout_callback(void)
+{
+    /* 中文注释：Motor_Hoolle2固定为扭蛋通道，超时事件单独上报。 */
+    EventGroupSetBits(&Mesg_event, MesgEvent_EggOutputTimeout);
 }
 
 static void CardMotorTimeout_callback(void)
@@ -276,9 +283,10 @@ void Servo_AutoRun(servo_t *Servo, uint32_t time)
 void CtrlTask(void)
 {
     // SteelBall_OutputEverySecond();//每秒吐一颗钢珠
-    /*==============吐珠电机控制===============*/
-    Ctrl_HoolleMotor(&Motor_Hoolle1, HoolleMotor_Speed, HoolleMotor_Dir, HoolleMotorTimeout_time, HoolleMotorReverse_Time, HoolleMotorRetry_Times, HoolleMotorTimeout_callback);
-    Ctrl_HoolleMotor(&Motor_Hoolle2, HoolleMotor2_Speed, HoolleMotor_Dir, HoolleMotorTimeout_time, HoolleMotorReverse_Time, HoolleMotorRetry_Times, HoolleMotorTimeout_callback);
+    /*==============钢珠电机控制（Motor_Hoolle1）===============*/
+    Ctrl_HoolleMotor(&Motor_Hoolle1, HoolleMotor_Speed, HoolleMotor_Dir, HoolleMotorTimeout_time, HoolleMotorReverse_Time, HoolleMotorRetry_Times, SteelBallMotorTimeout_callback);
+    /*==============扭蛋电机控制（Motor_Hoolle2）===============*/
+    Ctrl_HoolleMotor(&Motor_Hoolle2, HoolleMotor2_Speed, HoolleMotor_Dir, HoolleMotorTimeout_time, HoolleMotorReverse_Time, HoolleMotorRetry_Times, EggMotorTimeout_callback);
     /*==============卡片机控制===============*/
     Ctrl_CardMotor(&Card, CardMotorTimeout_time, CardMotorTimeout_callback);
     /*==============电子锁控制===============*/
