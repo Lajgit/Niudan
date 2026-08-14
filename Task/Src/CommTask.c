@@ -128,12 +128,13 @@ static void USART1_Deal(void *Rx_mesg)
             case r_GetVersion:
                 EventGroupSetBits(&Mesg_event, MesgEvent_VersionRequest);
                 break;
-                /// 出珠/扭蛋
+                /// 出钢珠/扭蛋
             case r_HoolleOutput:
                 data = ((mesg->Data3 << 8) | mesg->Data4);
-                if (mesg->ExpandCode == 0x00)
+                /* 中文注释：正式协议固定0x00=扭蛋，0x01=钢珠；其他值不执行。 */
+                if (mesg->ExpandCode == HOOLLE_TYPE_EGG)
                     Hoolle_Output(&Motor_Hoolle2, data);
-                else
+                else if (mesg->ExpandCode == HOOLLE_TYPE_STEEL_BALL)
                     Hoolle_Output(&Motor_Hoolle1, data);
                 break;
                 /// 出卡
@@ -141,14 +142,14 @@ static void USART1_Deal(void *Rx_mesg)
                 data = ((mesg->Data3 << 8) | mesg->Data4);
                 Card_Output(&Card, data);
                 break;
-                /// 清珠/清扭蛋
+                /// 清钢珠/清扭蛋
             case r_OutputAllHoolle:
-                if (mesg->ExpandCode == 0x00)
+                if (mesg->ExpandCode == HOOLLE_TYPE_EGG)
                 {
                     Motor_Hoolle2.ClearMode = 1;
                     Hoolle_Output(&Motor_Hoolle2, 0xFFFF - Motor_Hoolle2.Hoolle_num);
                 }
-                else
+                else if (mesg->ExpandCode == HOOLLE_TYPE_STEEL_BALL)
                 {
                     Motor_Hoolle1.ClearMode = 1;
                     Hoolle_Output(&Motor_Hoolle1, 0xFFFF - Motor_Hoolle1.Hoolle_num);
