@@ -4,6 +4,7 @@
 #include "KeyTask.h"
 #include "MainTask.h"
 #include "FlashTask.h"
+#include "DigitalTubeTask.h"
 #include "app_crc.h"
 #include "app_list.h"
 #include "string.h"
@@ -197,11 +198,14 @@ static void USART1_Deal(void *Rx_mesg)
                 break;
                 /// 数码管显示
             case r_DigitalTubeData:
-            {
-                uint32_t data = mesg->Data1 << 24 | mesg->Data2 << 16 | mesg->Data3 << 8 | mesg->Data4;
-                Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x01, data, 0x00); // 发送给控台板
+                data = (uint32_t)mesg->Data1 << 24 |
+                       (uint32_t)mesg->Data2 << 16 |
+                       (uint32_t)mesg->Data3 << 8 |
+                       (uint32_t)mesg->Data4;
+                /* 中文注释：新控制板数码管在本板J6，由SPI2直接刷新，不再转发给控台板。 */
+                DigitalTube.Set_Num(&DigitalTube, 0, data, 4);
+                DigitalTube.Refresh(&DigitalTube);
                 break;
-            }
             }
             /// 将该消息包加入已处理列表，防止短时间内重复处理同样ID的消息包
             List_AddNode(&DealList, mesg->ID, HAL_GetTick());
