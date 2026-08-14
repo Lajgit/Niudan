@@ -23,15 +23,10 @@ static ListNode_t DealList_buffer[100];
 
 static Mesg_TypeDef MesgTable[256];
 static uint8_t rx1_buffer[512];
-static uint8_t rx3_buffer[512];
-
 static Mesg_TypeDef Receive1_mesg;
-static Mesg_TypeDef Receive3_mesg;
 
 Tx_HandleTypeDef Tx1;
 Rx_HandleTypeDef Rx1;
-Tx_HandleTypeDef Tx3;
-Rx_HandleTypeDef Rx3;
 
 extern Event_Handle_t Mesg_event;
 extern Motor_Card Card;
@@ -40,7 +35,6 @@ extern Motor_Hoolle Motor_Hoolle2;
 extern servo_t Servo1;
 extern Switch_Valve Lock_Valve;
 extern ListHandle_t ResendList, DealList;
-extern Setting_TypeDef Setting;
 
 static bool Board_WriteBootRequest(uint32_t request_magic)
 {
@@ -112,6 +106,7 @@ static bool USART1_ReceiveMesg_Verify(void *self, void *mesg)
         return true;
     return false;
 }
+
 /// 串口1消息处理
 static void USART1_Deal(void *Rx_mesg)
 {
@@ -124,11 +119,12 @@ static void USART1_Deal(void *Rx_mesg)
         {
             switch (mesg->Code2)
             {
-                /// 版本请求
+            /// 版本请求
             case r_GetVersion:
                 EventGroupSetBits(&Mesg_event, MesgEvent_VersionRequest);
                 break;
-                /// 出钢珠/扭蛋
+
+            /// 出钢珠/扭蛋
             case r_HoolleOutput:
                 data = ((mesg->Data3 << 8) | mesg->Data4);
                 /* 中文注释：正式协议固定0x00=扭蛋，0x01=钢珠；其他值不执行。 */
@@ -137,12 +133,14 @@ static void USART1_Deal(void *Rx_mesg)
                 else if (mesg->ExpandCode == HOOLLE_TYPE_STEEL_BALL)
                     Hoolle_Output(&Motor_Hoolle1, data);
                 break;
-                /// 出卡
+
+            /// 出卡
             case r_CardOutput:
                 data = ((mesg->Data3 << 8) | mesg->Data4);
                 Card_Output(&Card, data);
                 break;
-                /// 清钢珠/清扭蛋
+
+            /// 清钢珠/清扭蛋
             case r_OutputAllHoolle:
                 if (mesg->ExpandCode == HOOLLE_TYPE_EGG)
                 {
@@ -155,41 +153,42 @@ static void USART1_Deal(void *Rx_mesg)
                     Hoolle_Output(&Motor_Hoolle1, 0xFFFF - Motor_Hoolle1.Hoolle_num);
                 }
                 break;
-                /// 吐出剩余
+
+            /// 继续扭蛋和卡片剩余输出
             case r_OutputRemainingItem:
                 Hoolle_Output(&Motor_Hoolle2, 0);
                 Card_Output(&Card, 0);
                 break;
-                /// 恢复默认设置
+
+            /// 恢复默认设置
             case r_ResumeDefultSetting:
                 ResumeSetting();
                 break;
-                /// 保存设置
+
+            /// 保存设置
             case r_SaveSetting:
                 EventGroupSetBits(&Mesg_event, Event_FlashData);
                 break;
-                /// 开锁
+
+            /// 开锁
             case r_Unlock:
                 Lock_Valve.Switch.state = DEVICE_STATE_START;
                 EventGroupSetBits(&Mesg_event, MesgEvent_Unlock);
                 break;
-                /* 中文注释：旧弹界球盘亮度、灯带、场景、双门舵机和球盘灯控制均已删除，不再驱动新原理图不存在的硬件。 */
-                /// 控台亮度
-            case r_CtrlLightness:
-                Setting.Ctrl_Lightness = mesg->Data4;
-                Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, 0x04, Setting.Ctrl_Lightness, 0x00);
-                break;
-                /// 舵机1归零
+
+            /// 舵机1归零
             case r_ServoReset:
                 Servo1.SetAngle(&Servo1, 90);
                 break;
-                /// 停止所有设备
+
+            /// 停止所有设备
             case r_StopAllDevice:
                 Motor_Hoolle1.Motor.state = DEVICE_STATE_STOP;
                 Motor_Hoolle2.Motor.state = DEVICE_STATE_STOP;
                 Card.Switch.state = DEVICE_STATE_STOP;
                 break;
-                /// 系统复位/进入Bootloader
+
+            /// 系统复位/进入Bootloader
             case r_SystemReset:
                 data = (uint32_t)mesg->Data1 << 24 |
                        (uint32_t)mesg->Data2 << 16 |
@@ -197,17 +196,19 @@ static void USART1_Deal(void *Rx_mesg)
                        (uint32_t)mesg->Data4;
                 Board_SystemRestart(data == OTA_REQUEST_MAGIC);
                 break;
-                /// 数码管显示
+
+            /// 数码管显示
             case r_DigitalTubeData:
                 data = (uint32_t)mesg->Data1 << 24 |
                        (uint32_t)mesg->Data2 << 16 |
                        (uint32_t)mesg->Data3 << 8 |
                        (uint32_t)mesg->Data4;
-                /* 中文注释：新控制板数码管在本板J6，由SPI2直接刷新，不再转发给控台板。 */
+                /* 中文注释：当前没有独立控台，四位数码管由主板SPI2直接刷新。 */
                 DigitalTube.Set_Num(&DigitalTube, 0, data, 4);
                 DigitalTube.Refresh(&DigitalTube);
                 break;
             }
+
             /// 将该消息包加入已处理列表，防止短时间内重复处理同样ID的消息包
             List_AddNode(&DealList, mesg->ID, HAL_GetTick());
         }
@@ -219,43 +220,6 @@ static void USART1_Deal(void *Rx_mesg)
         List_DeleteNode(&ResendList, mesg->ID);
     }
 }
-
-/// @brief  串口3处理
-/// @param Rx_mesg
-static void USART3_Deal(void *Rx_mesg)
-{
-    Mesg_TypeDef *mesg = (Mesg_TypeDef *)Rx_mesg;
-    if (mesg->Code1 == Ctrl_to_Board)
-    {
-        switch (mesg->Code2)
-        {
-        /// 按键
-        case 0x01:
-            Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Button, mesg->Data4, mesg->ExpandCode);
-            break;
-        /// 键盘
-        case 0x02:
-            Comm_SendMesg_FillData(&Tx1, Board_to_Android, 0x15, mesg->Data4, mesg->ExpandCode);
-            break;
-        /// 编码器
-        case 0x03:
-            if (mesg->ExpandCode == 0x00)
-            {
-                Servo1.DecreaseAngle(&Servo1, 1);
-                Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Encoder, 0x00, 0x01);
-            }
-            else if (mesg->ExpandCode == 0x01)
-            {
-                Servo1.IncreaseAngle(&Servo1, 1);
-                Comm_SendMesg_FillData(&Tx1, Board_to_Android, t_Encoder, 0x00, 0x00);
-            }
-            else if (mesg->ExpandCode == 0x02)
-                Servo1.SetAngle(&Servo1, 90);
-            break;
-        }
-    }
-}
-///====================================================================================
 
 /// 发送消息，无重传
 static uint8_t USART_SendMesg(Tx_HandleTypeDef *Tx, Mesg_TypeDef *mesg)
@@ -272,10 +236,10 @@ static uint8_t USART_SendMesg(Tx_HandleTypeDef *Tx, Mesg_TypeDef *mesg)
     crc = CRC16_calculate(data, 11);
     data[11] = crc >> 8;
     data[12] = crc;
-    // Tx->Transimit(Tx, data, 14);
     HAL_UART_Transmit(Tx->huart, data, 14, 100);
     return ID;
 }
+
 /// 填入参数发送消息，无重传
 uint8_t Comm_SendMesg_FillData(Tx_HandleTypeDef *Tx, uint8_t code_1, uint8_t code_2, uint32_t data, uint8_t expandCode)
 {
@@ -340,10 +304,10 @@ static uint8_t USART_ReSendMesg(Tx_HandleTypeDef *Tx, Mesg_TypeDef *mesg)
     data[11] = crc >> 8;
     data[12] = crc;
     data[13] = Mesg_Tail;
-    // Tx->Transimit(Tx, data, 14);
     HAL_UART_Transmit(Tx->huart, data, 14, 100);
     return 0;
 }
+
 /// 发送应答消息
 static void USART_RequestMesg(Tx_HandleTypeDef *Tx, Mesg_TypeDef *mesg)
 {
@@ -364,13 +328,10 @@ static void USART_RequestMesg(Tx_HandleTypeDef *Tx, Mesg_TypeDef *mesg)
     data[11] = crc >> 8;
     data[12] = crc;
     data[13] = Mesg_Tail;
-    // Tx->Transimit(Tx, data, 14);
     HAL_UART_Transmit(Tx->huart, data, 14, 100);
 }
 
-/*
- * ----------检测重发消息----------
- */
+/* ----------检测重发消息---------- */
 void Resend_Task(void)
 {
     ListNode_t *Current = ResendList.Head;
@@ -390,9 +351,7 @@ void Resend_Task(void)
     }
 }
 
-/*
- * ----------清除已执行消息任务----------
- */
+/* ----------清除已执行消息任务---------- */
 void MesgDeal_Task(void)
 {
     ListNode_t *Current = DealList.Head;
@@ -406,15 +365,13 @@ void MesgDeal_Task(void)
     }
 }
 
-/*
- * ----------通信初始化----------
- */
+/* ----------通信初始化---------- */
 void CommInit(void)
 {
     List_Create(&ResendList, ResendList_buffer, 100);
     List_Create(&DealList, DealList_buffer, 100);
 
-    /// 串口1接收
+    /* 中文注释：当前无独立控台，正式通信只初始化主板与安卓之间的USART1。 */
     Rx_InitTypeDef Rxinit;
     Rxinit.huart = &huart1;
     Rxinit.RingBuf = rx1_buffer;
@@ -426,34 +383,15 @@ void CommInit(void)
     Rxinit.Deal = USART1_Deal;
     Communicate_Rx_Init(&Rx1, Rxinit);
 
-    /// 串口3接收
-    Rxinit.huart = &huart3;
-    Rxinit.RingBuf = rx3_buffer;
-    Rxinit.RingBuf_Size = sizeof(rx3_buffer);
-    Rxinit.Frame_Head = Mesg_Head;
-    Rxinit.Frame_Tail = Mesg_Tail;
-    Rxinit.Receive = Rx_Receive;
-    Rxinit.Verify = USART1_ReceiveMesg_Verify;
-    Rxinit.Deal = USART3_Deal;
-    Communicate_Rx_Init(&Rx3, Rxinit);
-
-    /// 串口1发送
     Tx_InitTypeDef Tx_init;
     Tx_init.huart = &huart1;
     Tx_init.hdma = NULL;
     Tx_init.TxBuf = NULL;
     Tx_init.TxBuf_Size = 0;
     Communicate_Tx_Init(&Tx1, Tx_init);
-    /// 串口3发送
-    Tx_init.huart = &huart3;
-    Tx_init.hdma = NULL;
-    Tx_init.TxBuf = NULL;
-    Tx_init.TxBuf_Size = 0;
-    Communicate_Tx_Init(&Tx3, Tx_init);
 }
 
 void CommTask(void)
 {
     Rx1.Receive(&Rx1, &Receive1_mesg, 14);
-    Rx3.Receive(&Rx3, &Receive3_mesg, 14);
 }
