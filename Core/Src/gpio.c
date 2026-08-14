@@ -61,6 +61,10 @@ void MX_GPIO_Init(void)
   /* 中文注释：新扭蛋机原理图中电子锁控制为 PA0，默认输出低电平保持关闭。 */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 
+  /* 中文注释：数码管RCLK默认低电平；SEG_OE先拉高关闭输出，首帧写入后再使能。 */
+  HAL_GPIO_WritePin(Tube_RCLK_GPIO_Port, Tube_RCLK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(Tube_OE_GPIO_Port, Tube_OE_Pin, GPIO_PIN_SET);
+
   /* 进珠光眼由SysTick软件滤波扫描，不再配置无效的EXTI2。 */
   GPIO_InitStruct.Pin = HoolleInput_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -100,16 +104,24 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* 编码器三路输入：现阶段保留原PB6/PB7/PD0扫描入口，后续按新协议调整语义。 */
+  /* 中文注释：PB12为数码管锁存时钟RCLK，PB14为段输出使能SEG_OE。 */
+  GPIO_InitStruct.Pin = Tube_RCLK_Pin | Tube_OE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* 中文注释：后台设置按键K1/K2使用PB6/PB7，均由板上电阻上拉，按下为低。 */
   GPIO_InitStruct.Pin = KeyBoard3_Pin | KeyBoard2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin = KeyBoard1_Pin;
+  /* 中文注释：后台设置按键K3使用PD0；游玩按键1~3使用PD8/PD9/PD10，均由板上电阻上拉。 */
+  GPIO_InitStruct.Pin = KeyBoard1_Pin | PlayButton1_Pin | PlayButton2_Pin | PlayButton3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(KeyBoard1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
