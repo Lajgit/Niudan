@@ -264,3 +264,19 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         break;
     }
 }
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == Rx1.Handle.huart)
+    {
+        /* 中文注释：USART1每收到1字节写入环形缓冲区，并立即继续接收下一字节。 */
+        Rx1.Handle.RingBuf.f_WriteByte(
+            &Rx1.Handle.RingBuf,
+            Rx1.Handle.temp_data);
+
+        HAL_UART_Receive_IT(
+            huart,
+            &Rx1.Handle.temp_data,
+            1);
+    }
+}
