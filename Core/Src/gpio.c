@@ -55,6 +55,9 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
+  /* 中文注释：两路12V灯带为低边MOS驱动，默认输出低电平保持关闭。 */
+  HAL_GPIO_WritePin(GPIOB, LedOutput1_Pin | LedOutput2_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CardOutput_GPIO_Port, CardOutput_Pin, GPIO_PIN_RESET);
 
@@ -96,6 +99,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CardOutput_GPIO_Port, &GPIO_InitStruct);
+
+  /* 中文注释：两路12V LED输出，硬件每路并接3个灯带接口，GPIO输出高电平时MOS导通。 */
+  GPIO_InitStruct.Pin = LedOutput1_Pin | LedOutput2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* 中文注释：电子锁MOS控制脚，原弹界TIM5灯效占用已取消。 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
