@@ -53,7 +53,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
 #if defined(DBGMCU_CR_TRACE_IOEN)
-  /* 中文注释：下载调试只使用SWD模式，关闭Trace/SWO输出，释放PB3给第一路12V LED。 */
+  /* 中文注释：下载调试只使用SWD模式，关闭Trace/SWO输出，避免PB3调试复用影响扩展GPIO。 */
   DBGMCU->CR &= ~DBGMCU_CR_TRACE_IOEN;
 #endif
 
