@@ -161,8 +161,6 @@ void Error_Handler(void);
 #define Q10_GPIO_Port GPIOD
 #define Q11_Pin GPIO_PIN_7
 #define Q11_GPIO_Port GPIOD
-#define Servo_3_Pin GPIO_PIN_3
-#define Servo_3_GPIO_Port GPIOB
 #define KeyBoard3_Pin GPIO_PIN_6
 #define KeyBoard3_GPIO_Port GPIOB
 #define KeyBoard2_Pin GPIO_PIN_7
