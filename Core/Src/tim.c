@@ -571,7 +571,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     /**TIM2 GPIO Configuration
     PA2     ------> TIM2_CH3
     PA15     ------> TIM2_CH1
-    PB3     ------> TIM2_CH2
+
+    中文注释：PB3已改作第1路12V LED输出，不再复用为TIM2_CH2。
     */
     GPIO_InitStruct.Pin = Servo_1_Pin|Servo_2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -580,12 +581,6 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = Servo_3_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-    HAL_GPIO_Init(Servo_3_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM2_MspPostInit 1 */
 
