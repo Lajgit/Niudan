@@ -12,7 +12,7 @@
   *
   * This software is licensed under terms that can be found in the LICENSE file
   * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * If no LICENSE file comes with the SOFTWARE, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -51,6 +51,11 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+#if defined(DBGMCU_CR_TRACE_IOEN)
+  /* 中文注释：下载调试只使用SWD模式，关闭Trace/SWO输出，释放PB3给第一路12V LED。 */
+  DBGMCU->CR &= ~DBGMCU_CR_TRACE_IOEN;
+#endif
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
