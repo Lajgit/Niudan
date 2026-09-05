@@ -9,6 +9,7 @@
 #include "app_list.h"
 #include "string.h"
 #include "usart.h"
+#include "gpio.h"
 
 #define Mesg_Head 0xAA
 #define Mesg_Tail 0x55
@@ -16,6 +17,7 @@
 static void USART_RequestMesg(Tx_HandleTypeDef *Tx, Mesg_TypeDef *mesg);
 static bool Board_WriteBootRequest(uint32_t request_magic);
 static void Board_SystemRestart(bool enter_bootloader);
+static void LedOutput_Set(uint8_t channel, uint8_t state);
 
 ListHandle_t ResendList, DealList;
 static ListNode_t ResendList_buffer[100];
@@ -35,6 +37,24 @@ extern Motor_Hoolle Motor_Hoolle2;
 extern servo_t Servo1;
 extern Switch_Valve Lock_Valve;
 extern ListHandle_t ResendList, DealList;
+
+static void LedOutput_Set(uint8_t channel, uint8_t state)
+{
+    GPIO_PinState pin_state;
+
+    /* 中文注释：两路12V LED使用低边MOS驱动，GPIO高电平导通，低电平关闭。 */
+    if (state == LED_OUTPUT_ON)
+        pin_state = GPIO_PIN_SET;
+    else if (state == LED_OUTPUT_OFF)
+        pin_state = GPIO_PIN_RESET;
+    else
+        return;
+
+    if (channel == LED_OUTPUT_CHANNEL_1)
+        HAL_GPIO_WritePin(LedOutput1_GPIO_Port, LedOutput1_Pin, pin_state);
+    else if (channel == LED_OUTPUT_CHANNEL_2)
+        HAL_GPIO_WritePin(LedOutput2_GPIO_Port, LedOutput2_Pin, pin_state);
+}
 
 static bool Board_WriteBootRequest(uint32_t request_magic)
 {
@@ -141,6 +161,16 @@ static void USART1_Deal(void *Rx_mesg)
                 Card_Output(&Card, data);
                 break;
 
+            /// 12V灯带控制
+            case r_ButtonLight:
+                /*
+                 * 中文注释：复用0x0A作为两路12V灯带控制。
+                 * Data4=0x01控制第1路三组LED，Data4=0x02控制第2路三组LED；
+                 * ExpandCode=0x00关闭，0x01开启。
+                 */
+                LedOutput_Set(mesg->Data4, mesg->ExpandCode);
+                break;
+
             /// 清钢珠/清扭蛋
             case r_OutputAllHoolle:
                 if (mesg->ExpandCode == HOOLLE_TYPE_EGG)
@@ -200,6 +230,8 @@ static void USART1_Deal(void *Rx_mesg)
                 SteelBall_MotorSwitch(MOTOR_SWITCH_OFF);
                 Motor_Hoolle2.Motor.state = DEVICE_STATE_STOP;
                 Card.Switch.state = DEVICE_STATE_STOP;
+                LedOutput_Set(LED_OUTPUT_CHANNEL_1, LED_OUTPUT_OFF);
+                LedOutput_Set(LED_OUTPUT_CHANNEL_2, LED_OUTPUT_OFF);
                 break;
 
             /// 系统复位/进入Bootloader
