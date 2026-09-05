@@ -47,6 +47,12 @@
 #define KEY_EVENT_LONG 0x02U
 #define KEY_EVENT_RELEASE 0x03U
 
+/* 中文注释：0x0A灯带控制协议定义，Data4选择第几路，ExpandCode选择开关状态。 */
+#define LED_OUTPUT_CHANNEL_1 0x01U
+#define LED_OUTPUT_CHANNEL_2 0x02U
+#define LED_OUTPUT_OFF 0x00U
+#define LED_OUTPUT_ON 0x01U
+
 /* 中文注释：0x21吐珠电机手动开关的ExpandCode定义。 */
 #define MOTOR_SWITCH_OFF 0x00U
 #define MOTOR_SWITCH_ON 0x01U
@@ -82,7 +88,7 @@
 #define r_SceneChange 0x07            // 场景编号（旧协议保留，当前未处理）
 #define r_WinChannel 0x08             // 中奖通道（旧协议保留，当前未处理）
 #define r_LittleGameResult 0x09       // 小游戏输赢结果（旧协议保留，当前未处理）
-#define r_ButtonLight 0x0A            // 按键灯（旧协议保留，当前未处理）
+#define r_ButtonLight 0x0A            // 12V灯带控制，Data4=1/2选择两路三组LED，ExpandCode=0关/1开
 #define r_OutputAllHoolle 0x0B        // 清空扭蛋/钢珠
 #define r_OutputRemainingItem 0x0C    // 继续扭蛋和卡片剩余输出
 #define r_ResumeDefultSetting 0x0D    // 恢复默认设置
