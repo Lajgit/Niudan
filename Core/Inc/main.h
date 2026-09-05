@@ -85,7 +85,7 @@ void Error_Handler(void);
 #define KeyLED_2_GPIO_Port GPIOC
 
 /* 中文注释：两路12V灯带输出，硬件每路对应3个LED接口，MOS高电平导通。 */
-#define LedOutput1_Pin GPIO_PIN_5
+#define LedOutput1_Pin GPIO_PIN_3
 #define LedOutput1_GPIO_Port GPIOB
 #define LedOutput2_Pin GPIO_PIN_4
 #define LedOutput2_GPIO_Port GPIOB
