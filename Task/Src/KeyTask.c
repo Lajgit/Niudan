@@ -3,7 +3,7 @@
 #include "port_key.h"
 
 #define SETTING_BUTTON_COUNT 3U
-#define PLAY_BUTTON_COUNT 3U
+#define PLAY_BUTTON_COUNT 4U
 
 /*
  * 中文注释：后台设置按键按原理图K1/K2/K3编号：
@@ -21,16 +21,18 @@ static uint32_t SettingButton_Pins[SETTING_BUTTON_COUNT] = {
     KeyBoard1_Pin,
 };
 
-/* 中文注释：外接游玩按键1~3分别接PD8/PD9/PD10，协议功能码为0x03。 */
+/* 中文注释：外接游玩/拍拍按键1~4分别接PD8/PD9/PD10/PD6，协议功能码为0x03。 */
 static GPIO_TypeDef *PlayButton_Port[PLAY_BUTTON_COUNT] = {
     PlayButton1_GPIO_Port,
     PlayButton2_GPIO_Port,
     PlayButton3_GPIO_Port,
+    PlayButton4_GPIO_Port,
 };
 static uint32_t PlayButton_Pins[PLAY_BUTTON_COUNT] = {
     PlayButton1_Pin,
     PlayButton2_Pin,
     PlayButton3_Pin,
+    PlayButton4_Pin,
 };
 
 static Key_HandleTypeDef setting_button[SETTING_BUTTON_COUNT];
