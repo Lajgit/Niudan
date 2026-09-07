@@ -113,13 +113,15 @@ void Error_Handler(void);
 #define Tube_SER_Pin GPIO_PIN_15
 #define Tube_SER_GPIO_Port GPIOB
 
-/* 中文注释：三路外接游玩按键，协议编号依次为1、2、3。 */
+/* 中文注释：四路外接游玩/拍拍按键，协议编号依次为1、2、3、4。 */
 #define PlayButton1_Pin GPIO_PIN_8
 #define PlayButton1_GPIO_Port GPIOD
 #define PlayButton2_Pin GPIO_PIN_9
 #define PlayButton2_GPIO_Port GPIOD
 #define PlayButton3_Pin GPIO_PIN_10
 #define PlayButton3_GPIO_Port GPIOD
+#define PlayButton4_Pin GPIO_PIN_6
+#define PlayButton4_GPIO_Port GPIOD
 
 #define Hole_B1_Pin GPIO_PIN_11
 #define Hole_B1_GPIO_Port GPIOD
