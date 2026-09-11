@@ -165,7 +165,6 @@ static void Hoolle_1_Output_IRQ(void)
 
 static void Hoolle_2_Output_IRQ(void)
 {
-    static uint8_t LastBallStopped = 0U;
     uint32_t LowCount;
 
     if (HAL_GPIO_ReadPin(
@@ -173,20 +172,13 @@ static void Hoolle_2_Output_IRQ(void)
             HoolleOutput_2_Pin) == GPIO_PIN_RESET)
     {
         __HAL_TIM_SetCounter(&htim7, 0);
+
+        /*
+         * 中文注释：扭蛋进入下方抓手后光眼被遮挡，此时不能停电机。
+         * 电机需要继续旋转直到抓手打开、扭蛋真正掉出；这里只重置出货超时计时。
+         */
         Motor_Hoolle2.Motor.ResetRuntime(
             &Motor_Hoolle2.Motor);
-
-        if (Motor_Hoolle2.Hoolle_num == 1U &&
-            Motor_Hoolle2.Motor.state == DEVICE_STATE_BUSY)
-        {
-            Motor_Hoolle2.Motor.Stop(
-                &Motor_Hoolle2.Motor);
-            LastBallStopped = 1U;
-        }
-        else
-        {
-            LastBallStopped = 0U;
-        }
 
         return;
     }
@@ -197,6 +189,7 @@ static void Hoolle_2_Output_IRQ(void)
     {
         if (Motor_Hoolle2.Hoolle_num > 0U)
         {
+            /* 中文注释：光眼恢复高电平表示扭蛋已离开抓手，才计为成功出货一颗。 */
             Motor_Hoolle2.Hoolle_num--;
             Motor_Hoolle2.RetryCount = 0;
 
@@ -205,6 +198,7 @@ static void Hoolle_2_Output_IRQ(void)
                 &Mesg_event,
                 MesgEvent_RemainingEgg);
 
+            /* 中文注释：最后一颗真正掉出后再进入停止状态，避免提前停机导致少出一颗。 */
             if (Motor_Hoolle2.Hoolle_num == 0U &&
                 Motor_Hoolle2.Motor.state != DEVICE_STATE_IDLE)
             {
@@ -212,20 +206,7 @@ static void Hoolle_2_Output_IRQ(void)
                     DEVICE_STATE_STOP;
             }
         }
-
-        LastBallStopped = 0U;
-        return;
     }
-
-    if (LastBallStopped != 0U &&
-        Motor_Hoolle2.Hoolle_num == 1U &&
-        Motor_Hoolle2.Motor.state == DEVICE_STATE_BUSY)
-    {
-        Motor_Hoolle2.Motor.state =
-            DEVICE_STATE_START;
-    }
-
-    LastBallStopped = 0U;
 }
 
 static void CardOutput_IRQ(void)
