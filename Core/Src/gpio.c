@@ -12,7 +12,7 @@
   *
   * This software is licensed under terms that can be found in the LICENSE file
   * in the root directory of this software component.
-  * If no LICENSE file comes with the SOFTWARE, it is provided AS-IS.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -63,8 +63,9 @@ void MX_GPIO_Init(void)
   /* 中文注释：两路12V灯带为低边MOS驱动，预置输出高电平保持默认开启。 */
   HAL_GPIO_WritePin(GPIOB, LedOutput1_Pin | LedOutput2_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
+  /* 中文注释：两组卡片机控制输出上电默认关闭。 */
   HAL_GPIO_WritePin(CardOutput_GPIO_Port, CardOutput_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(Card2Output_GPIO_Port, Card2Output_Pin, GPIO_PIN_RESET);
 
   /* 中文注释：新扭蛋机原理图中电子锁控制为 PA0，默认输出低电平保持关闭。 */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
@@ -79,14 +80,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(HoolleInput_GPIO_Port, &GPIO_InitStruct);
 
-  /* 出卡反馈和投币保持原上升沿。 */
-  GPIO_InitStruct.Pin = CardFeedback_Pin | CoinInput_Pin;
+  /* 中文注释：两组卡片机反馈和投币保持原有上升沿触发方式。 */
+  GPIO_InitStruct.Pin = CardFeedback_Pin | CoinInput_Pin | Card2Feedback_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /* 两路出货光眼均需要检测高低电平变化。 */
-  GPIO_InitStruct.Pin = HoolleOutput_1_Pin | HoolleOutput_2_Pin;
+  /* 中文注释：原两路出货光眼以及新增PE7/PE8独立光眼均检测高低电平变化。 */
+  GPIO_InitStruct.Pin = HoolleOutput_1_Pin | HoolleOutput_2_Pin | ExtraEye1_Pin | ExtraEye2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -98,12 +99,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
-  /* 卡片机控制输出 */
-  GPIO_InitStruct.Pin = CardOutput_Pin;
+  /* 中文注释：两组卡片机控制输出分别使用PC4、PC5。 */
+  GPIO_InitStruct.Pin = CardOutput_Pin | Card2Output_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(CardOutput_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /* 中文注释：两路12V LED输出，硬件每路并接3个灯带接口，GPIO输出高电平时MOS导通。 */
   GPIO_InitStruct.Pin = LedOutput1_Pin | LedOutput2_Pin;
@@ -150,6 +151,10 @@ void MX_GPIO_Init(void)
 
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  /* 中文注释：PE10作为第二卡片机反馈，使用EXTI10并挂在EXTI15_10中断组。 */
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
