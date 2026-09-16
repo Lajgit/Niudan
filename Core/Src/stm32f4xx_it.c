@@ -298,9 +298,27 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(CardFeedback_Pin);
   HAL_GPIO_EXTI_IRQHandler(CoinInput_Pin);
+  /* 中文注释：PE7/PE8两路新增独立光眼先完成中断接入，业务处理后续按协议补充。 */
+  HAL_GPIO_EXTI_IRQHandler(ExtraEye1_Pin);
+  HAL_GPIO_EXTI_IRQHandler(ExtraEye2_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line[15:10] interrupts.
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  /* 中文注释：PE10作为第二组卡片机反馈，业务处理后续按通信协议补充。 */
+  HAL_GPIO_EXTI_IRQHandler(Card2Feedback_Pin);
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+
+  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /**
