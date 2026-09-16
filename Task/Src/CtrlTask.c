@@ -288,9 +288,9 @@ void Device_Init(void)
     /* 中文注释：新扭蛋机原理图电子锁控制脚为PA0，旧弹界PB1锁控已删除。 */
     Device_Switch_Init(&Lock_Valve.Switch, GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
 
-    /* 中文注释：三路舵机共用TIM2的50Hz周期，分别使用CH3/CH2/CH4。 */
-    Device_Servo_Init(&Servo1, &htim2, TIM_CHANNEL_3, 45, 135, 90);
-    Device_Servo_Init(&Servo2, &htim2, TIM_CHANNEL_2, 45, 135, 90);
+    /* 中文注释：按原理图编号：舵机1=PA1/TIM2_CH2，舵机2=PA2/TIM2_CH3，舵机3=PA3/TIM2_CH4。 */
+    Device_Servo_Init(&Servo1, &htim2, TIM_CHANNEL_2, 45, 135, 90);
+    Device_Servo_Init(&Servo2, &htim2, TIM_CHANNEL_3, 45, 135, 90);
     Device_Servo_Init(&Servo3, &htim2, TIM_CHANNEL_4, 45, 135, 90);
     HAL_TIM_Base_Start(&htim7);
 
