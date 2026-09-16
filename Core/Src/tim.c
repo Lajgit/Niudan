@@ -82,7 +82,7 @@ void MX_TIM1_Init(void)
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCIDLESTATE_RESET;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
@@ -170,6 +170,11 @@ void MX_TIM2_Init(void)
     Error_Handler();
   }
   if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* 中文注释：新增舵机3使用TIM2_CH4，与现有舵机共用50Hz周期。 */
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }
@@ -567,14 +572,14 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE END TIM2_MspPostInit 0 */
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM2 GPIO Configuration
+    PA1     ------> TIM2_CH2
     PA2     ------> TIM2_CH3
-    PA15     ------> TIM2_CH1
+    PA3     ------> TIM2_CH4
 
-    中文注释：PB3已改作第1路12V LED输出，不再复用为TIM2_CH2。
+    中文注释：PB3继续作为第1路12V LED输出，PA15旧舵机复用已取消。
     */
-    GPIO_InitStruct.Pin = Servo_1_Pin|Servo_2_Pin;
+    GPIO_InitStruct.Pin = Servo_1_Pin|Servo_2_Pin|Servo_3_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
