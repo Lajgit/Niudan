@@ -12,7 +12,7 @@
 
 Motor_Hoolle Motor_Hoolle1, Motor_Hoolle2;
 Motor_Card Card;
-servo_t Servo1;
+servo_t Servo1, Servo2, Servo3;
 Switch_Valve Lock_Valve;
 
 extern Tx_HandleTypeDef Tx1;
@@ -288,8 +288,10 @@ void Device_Init(void)
     /* 中文注释：新扭蛋机原理图电子锁控制脚为PA0，旧弹界PB1锁控已删除。 */
     Device_Switch_Init(&Lock_Valve.Switch, GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
 
-    /* 中文注释：新原理图仅保留舵机1（PA2/TIM2_CH3），删除旧弹界舵机2和舵机3。 */
+    /* 中文注释：三路舵机共用TIM2的50Hz周期，分别使用CH3/CH2/CH4。 */
     Device_Servo_Init(&Servo1, &htim2, TIM_CHANNEL_3, 45, 135, 90);
+    Device_Servo_Init(&Servo2, &htim2, TIM_CHANNEL_2, 45, 135, 90);
+    Device_Servo_Init(&Servo3, &htim2, TIM_CHANNEL_4, 45, 135, 90);
     HAL_TIM_Base_Start(&htim7);
 
     Motor_Hoolle1.Hoolle_num = 0;
