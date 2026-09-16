@@ -21,7 +21,7 @@ static uint32_t SettingButton_Pins[SETTING_BUTTON_COUNT] = {
     KeyBoard1_Pin,
 };
 
-/* 中文注释：外接游玩/拍拍按键1~4分别接PD8/PD9/PD10/PD6，协议功能码为0x03。 */
+/* 中文注释：外接游玩/拍拍按键1~4分别接PD8/PD9/PD10/PD11，协议功能码为0x03。 */
 static GPIO_TypeDef *PlayButton_Port[PLAY_BUTTON_COUNT] = {
     PlayButton1_GPIO_Port,
     PlayButton2_GPIO_Port,
