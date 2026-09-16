@@ -104,10 +104,10 @@ void Error_Handler(void);
 #define LedOutput2_Pin GPIO_PIN_4
 #define LedOutput2_GPIO_Port GPIOB
 
-/* 中文注释：三路舵机统一使用TIM2的50Hz PWM：PA1=CH2、PA2=CH3、PA3=CH4。 */
-#define Servo_1_Pin GPIO_PIN_2
+/* 中文注释：按新原理图命名三路舵机：舵机1=PA1/CH2、舵机2=PA2/CH3、舵机3=PA3/CH4。 */
+#define Servo_1_Pin GPIO_PIN_1
 #define Servo_1_GPIO_Port GPIOA
-#define Servo_2_Pin GPIO_PIN_1
+#define Servo_2_Pin GPIO_PIN_2
 #define Servo_2_GPIO_Port GPIOA
 #define Servo_3_Pin GPIO_PIN_3
 #define Servo_3_GPIO_Port GPIOA
@@ -135,16 +135,23 @@ void Error_Handler(void);
 #define Tube_SER_Pin GPIO_PIN_15
 #define Tube_SER_GPIO_Port GPIOB
 
-/* 中文注释：四路外接游玩/拍拍按键，协议编号依次为1、2、3、4。 */
+/* 中文注释：四路外接游玩/拍拍按键，协议编号依次为1、2、3、4；按键4正式使用PD11。 */
 #define PlayButton1_Pin GPIO_PIN_8
 #define PlayButton1_GPIO_Port GPIOD
 #define PlayButton2_Pin GPIO_PIN_9
 #define PlayButton2_GPIO_Port GPIOD
 #define PlayButton3_Pin GPIO_PIN_10
 #define PlayButton3_GPIO_Port GPIOD
-#define PlayButton4_Pin GPIO_PIN_6
+#define PlayButton4_Pin GPIO_PIN_11
 #define PlayButton4_GPIO_Port GPIOD
 
+/* 中文注释：PD5/PD6按新原理图保留给串口2，通信参数后续确定后再初始化USART2。 */
+#define Serial2_TX_Pin GPIO_PIN_5
+#define Serial2_TX_GPIO_Port GPIOD
+#define Serial2_RX_Pin GPIO_PIN_6
+#define Serial2_RX_GPIO_Port GPIOD
+
+/* 中文注释：旧Hole_B1宏仍指向PD11，仅为兼容旧代码；PD11当前实际功能为拍拍按键4，不得同时启用旧孔洞逻辑。 */
 #define Hole_B1_Pin GPIO_PIN_11
 #define Hole_B1_GPIO_Port GPIOD
 #define Hole_B2_Pin GPIO_PIN_12
@@ -177,10 +184,6 @@ void Error_Handler(void);
 #define Q7_GPIO_Port GPIOD
 #define Q8_Pin GPIO_PIN_4
 #define Q8_GPIO_Port GPIOD
-#define Q9_Pin GPIO_PIN_5
-#define Q9_GPIO_Port GPIOD
-#define Q10_Pin GPIO_PIN_6
-#define Q10_GPIO_Port GPIOD
 #define Q11_Pin GPIO_PIN_7
 #define Q11_GPIO_Port GPIOD
 #define KeyBoard3_Pin GPIO_PIN_6
