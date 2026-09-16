@@ -72,6 +72,20 @@ void Error_Handler(void);
 #define CoinInput_Pin GPIO_PIN_6
 #define CoinInput_GPIO_Port GPIOE
 #define CoinInput_EXTI_IRQn EXTI9_5_IRQn
+
+/* 中文注释：新增两路独立光眼使用PE7/PE8，预留双边沿状态检测。 */
+#define ExtraEye1_Pin GPIO_PIN_7
+#define ExtraEye1_GPIO_Port GPIOE
+#define ExtraEye1_EXTI_IRQn EXTI9_5_IRQn
+#define ExtraEye2_Pin GPIO_PIN_8
+#define ExtraEye2_GPIO_Port GPIOE
+#define ExtraEye2_EXTI_IRQn EXTI9_5_IRQn
+
+/* 中文注释：第二组卡片机反馈使用PE10，控制输出使用PC5。 */
+#define Card2Feedback_Pin GPIO_PIN_10
+#define Card2Feedback_GPIO_Port GPIOE
+#define Card2Feedback_EXTI_IRQn EXTI15_10_IRQn
+
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
 #define SettingButton_Pin GPIO_PIN_0
@@ -108,6 +122,8 @@ void Error_Handler(void);
 #define SD_MOSI_GPIO_Port GPIOA
 #define CardOutput_Pin GPIO_PIN_4
 #define CardOutput_GPIO_Port GPIOC
+#define Card2Output_Pin GPIO_PIN_5
+#define Card2Output_GPIO_Port GPIOC
 
 /* 中文注释：J6数码管接口，PB13/PB15复用SPI2，PB12/PB14作为普通GPIO。 */
 #define Tube_RCLK_Pin GPIO_PIN_12
