@@ -90,8 +90,14 @@ void Error_Handler(void);
 #define LedOutput2_Pin GPIO_PIN_4
 #define LedOutput2_GPIO_Port GPIOB
 
+/* 中文注释：三路舵机统一使用TIM2的50Hz PWM：PA1=CH2、PA2=CH3、PA3=CH4。 */
 #define Servo_1_Pin GPIO_PIN_2
 #define Servo_1_GPIO_Port GPIOA
+#define Servo_2_Pin GPIO_PIN_1
+#define Servo_2_GPIO_Port GPIOA
+#define Servo_3_Pin GPIO_PIN_3
+#define Servo_3_GPIO_Port GPIOA
+
 #define SD_CS_Pin GPIO_PIN_4
 #define SD_CS_GPIO_Port GPIOA
 #define SD_CLK_Pin GPIO_PIN_5
@@ -147,8 +153,6 @@ void Error_Handler(void);
 #define Hole_Y4_GPIO_Port GPIOA
 #define Hole_B7_Pin GPIO_PIN_12
 #define Hole_B7_GPIO_Port GPIOA
-#define Servo_2_Pin GPIO_PIN_15
-#define Servo_2_GPIO_Port GPIOA
 
 /* 中文注释：后台设置按键。原理图K1=PB6、K2=PB7、K3=PD0；旧宏名暂保留以缩小修改范围。 */
 #define KeyBoard1_Pin GPIO_PIN_0
