@@ -25,10 +25,18 @@ static ListNode_t DealList_buffer[100];
 
 static Mesg_TypeDef MesgTable[256];
 static uint8_t rx1_buffer[512];
+static uint8_t rx3_buffer[512];
+
 static Mesg_TypeDef Receive1_mesg;
+static Mesg_TypeDef Receive3_mesg;
 
 Tx_HandleTypeDef Tx1;
 Rx_HandleTypeDef Rx1;
+Tx_HandleTypeDef Tx3;
+Rx_HandleTypeDef Rx3;
+
+/* 最近一次收到的控台版本号；未收到0x00版本消息前保持为0。 */
+uint32_t CtrlVersion = 0U;
 
 extern Event_Handle_t Mesg_event;
 extern Motor_Card Card;
@@ -37,6 +45,7 @@ extern Motor_Hoolle Motor_Hoolle2;
 extern servo_t Servo1;
 extern Switch_Valve Lock_Valve;
 extern ListHandle_t ResendList, DealList;
+extern Setting_TypeDef Setting;
 
 static void LedOutput_Set(uint8_t channel, uint8_t state)
 {
@@ -161,6 +170,32 @@ static void USART1_Deal(void *Rx_mesg)
                 Card_Output(&Card, data);
                 break;
 
+            /// 控台灯带亮度
+            case r_LightBeltLightness:
+                if (mesg->Data4 <= CTRL_BRIGHTNESS_MAX)
+                {
+                    Setting.LightBelt_Lightness = mesg->Data4;
+                    Comm_SendMesg_FillData(&Tx3,
+                                           Board_to_Ctrl,
+                                           CTRL_CMD_LIGHT_BELT_BRIGHTNESS,
+                                           mesg->Data4,
+                                           0x00);
+                }
+                break;
+
+            /// 控台灯光场景
+            case r_SceneChange:
+                /*
+                 * 安卓现有场景编号使用Data4；
+                 * 小丑控台协议要求场景/位置放在ExpandCode。
+                 */
+                Comm_SendMesg_FillData(&Tx3,
+                                       Board_to_Ctrl,
+                                       CTRL_CMD_LIGHT_SCENE,
+                                       0x00,
+                                       mesg->Data4);
+                break;
+
             /// 12V灯带控制
             case r_ButtonLight:
                 /*
@@ -205,6 +240,41 @@ static void USART1_Deal(void *Rx_mesg)
             case r_Unlock:
                 Lock_Valve.Switch.state = DEVICE_STATE_START;
                 EventGroupSetBits(&Mesg_event, MesgEvent_Unlock);
+                break;
+
+            /// 控台按键灯
+            case r_CtrlButtonLight:
+                /*
+                 * Data3=位置编号0x00~0x08，Data4=颜色编号0x00~0x08；
+                 * ExpandCode=0x00常亮、0x01常灭、0x03闪烁。
+                 * 与现有0x0A两路12V灯带控制分离，避免改变原协议。
+                 */
+                if (mesg->Data3 <= CTRL_BUTTON_POSITION_MAX &&
+                    mesg->Data4 <= CTRL_BUTTON_COLOR_MAX &&
+                    (mesg->ExpandCode == CTRL_BUTTON_LIGHT_ON ||
+                     mesg->ExpandCode == CTRL_BUTTON_LIGHT_OFF ||
+                     mesg->ExpandCode == CTRL_BUTTON_LIGHT_BLINK))
+                {
+                    data = ((uint32_t)mesg->Data3 << 8) | (uint32_t)mesg->Data4;
+                    Comm_SendMesg_FillData(&Tx3,
+                                           Board_to_Ctrl,
+                                           CTRL_CMD_BUTTON_LIGHT,
+                                           data,
+                                           mesg->ExpandCode);
+                }
+                break;
+
+            /// 控台亮度
+            case r_CtrlLightness:
+                if (mesg->Data4 <= CTRL_BRIGHTNESS_MAX)
+                {
+                    Setting.Ctrl_Lightness = mesg->Data4;
+                    Comm_SendMesg_FillData(&Tx3,
+                                           Board_to_Ctrl,
+                                           CTRL_CMD_BRIGHTNESS,
+                                           mesg->Data4,
+                                           0x00);
+                }
                 break;
 
             /// 舵机1归零
@@ -254,6 +324,12 @@ static void USART1_Deal(void *Rx_mesg)
                  * 三位兼容标记开启时，显示值会在DigitalTubeTask中左移一位处理。
                  */
                 DigitalTube_SetDisplayNumber(data);
+                /* 同一显示值同步转发给USART3控台数码管。 */
+                Comm_SendMesg_FillData(&Tx3,
+                                       Board_to_Ctrl,
+                                       CTRL_CMD_DIGITAL_TUBE,
+                                       data,
+                                       0x00);
                 break;
             }
 
@@ -266,6 +342,87 @@ static void USART1_Deal(void *Rx_mesg)
     {
         /// 重发列表中去除该消息包
         List_DeleteNode(&ResendList, mesg->ID);
+    }
+}
+
+/// @brief USART3控台消息处理
+/// @param Rx_mesg 已通过帧头、帧尾和CRC16校验的14字节消息
+static void USART3_Deal(void *Rx_mesg)
+{
+    Mesg_TypeDef *mesg = (Mesg_TypeDef *)Rx_mesg;
+
+    if (mesg->Code1 != Ctrl_to_Board)
+        return;
+
+    switch (mesg->Code2)
+    {
+    /// 控台版本号
+    case CTRL_EVENT_VERSION:
+        CtrlVersion = ((uint32_t)mesg->Data1 << 24) |
+                      ((uint32_t)mesg->Data2 << 16) |
+                      ((uint32_t)mesg->Data3 << 8) |
+                      (uint32_t)mesg->Data4;
+        break;
+
+    /// 普通按键
+    case CTRL_EVENT_BUTTON:
+        if (mesg->Data4 >= 0x01U && mesg->Data4 <= 0x06U &&
+            mesg->ExpandCode >= CTRL_KEY_SHORT &&
+            mesg->ExpandCode <= CTRL_KEY_RELEASE)
+        {
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_Button,
+                                   mesg->Data4,
+                                   mesg->ExpandCode);
+        }
+        break;
+
+    /// 特殊功能按键
+    case CTRL_EVENT_SPECIAL_BUTTON:
+        if (mesg->Data4 >= 0x01U && mesg->Data4 <= 0x04U &&
+            mesg->ExpandCode >= CTRL_KEY_SHORT &&
+            mesg->ExpandCode <= CTRL_KEY_RELEASE)
+        {
+            /* 保持旧控台到安卓的0x15功能码，避免影响既有上层定义。 */
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_CtrlSpecialButton,
+                                   mesg->Data4,
+                                   mesg->ExpandCode);
+        }
+        break;
+
+    /// 旋转编码器
+    case CTRL_EVENT_ENCODER:
+        if (mesg->ExpandCode == CTRL_ENCODER_LEFT)
+        {
+            Servo1.DecreaseAngle(&Servo1, 1U);
+            /* 保持旧安卓方向定义：控台左转0x00，安卓侧上报0x01。 */
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_Encoder,
+                                   0x00,
+                                   0x01);
+        }
+        else if (mesg->ExpandCode == CTRL_ENCODER_RIGHT)
+        {
+            Servo1.IncreaseAngle(&Servo1, 1U);
+            /* 保持旧安卓方向定义：控台右转0x01，安卓侧上报0x00。 */
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_Encoder,
+                                   0x00,
+                                   0x00);
+        }
+        else if (mesg->ExpandCode == CTRL_ENCODER_PRESS)
+        {
+            Servo1.SetAngle(&Servo1, 90U);
+        }
+        break;
+
+    default:
+        break;
     }
 }
 
@@ -419,7 +576,7 @@ void CommInit(void)
     List_Create(&ResendList, ResendList_buffer, 100);
     List_Create(&DealList, DealList_buffer, 100);
 
-    /* 中文注释：当前无独立控台，正式通信只初始化主板与安卓之间的USART1。 */
+    /// USART1：主板与安卓
     Rx_InitTypeDef Rxinit;
     Rxinit.huart = &huart1;
     Rxinit.RingBuf = rx1_buffer;
@@ -431,15 +588,33 @@ void CommInit(void)
     Rxinit.Deal = USART1_Deal;
     Communicate_Rx_Init(&Rx1, Rxinit);
 
+    /// USART3：主板与控台，沿用同一套14字节帧和CRC16校验
+    Rxinit.huart = &huart3;
+    Rxinit.RingBuf = rx3_buffer;
+    Rxinit.RingBuf_Size = sizeof(rx3_buffer);
+    Rxinit.Frame_Head = Mesg_Head;
+    Rxinit.Frame_Tail = Mesg_Tail;
+    Rxinit.Receive = Rx_Receive;
+    Rxinit.Verify = USART1_ReceiveMesg_Verify;
+    Rxinit.Deal = USART3_Deal;
+    Communicate_Rx_Init(&Rx3, Rxinit);
+
     Tx_InitTypeDef Tx_init;
     Tx_init.huart = &huart1;
     Tx_init.hdma = NULL;
     Tx_init.TxBuf = NULL;
     Tx_init.TxBuf_Size = 0;
     Communicate_Tx_Init(&Tx1, Tx_init);
+
+    Tx_init.huart = &huart3;
+    Tx_init.hdma = NULL;
+    Tx_init.TxBuf = NULL;
+    Tx_init.TxBuf_Size = 0;
+    Communicate_Tx_Init(&Tx3, Tx_init);
 }
 
 void CommTask(void)
 {
     Rx1.Receive(&Rx1, &Receive1_mesg, 14);
+    Rx3.Receive(&Rx3, &Receive3_mesg, 14);
 }
