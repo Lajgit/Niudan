@@ -320,11 +320,16 @@ static void USART1_Deal(void *Rx_mesg)
                        (uint32_t)mesg->Data3 << 8 |
                        (uint32_t)mesg->Data4;
                 /*
-                 * 中文注释：数码管由主板SPI2直接刷新。
-                 * 三位兼容标记开启时，显示值会在DigitalTubeTask中左移一位处理。
+                 * 中文注释：先按主板三位数码管兼容逻辑显示。
+                 * DigitalTube_SetDisplayNumber()内部可能为主板本地显示执行×10左移，
+                 * 但data本身保持安卓原始值不变。
                  */
                 DigitalTube_SetDisplayNumber(data);
-                /* 同一显示值同步转发给USART3控台数码管。 */
+
+                /*
+                 * 控台数码管为正常四位，不需要×10。
+                 * 因此这里始终转发安卓原始data，使两块数码管显示相同的有效数字。
+                 */
                 Comm_SendMesg_FillData(&Tx3,
                                        Board_to_Ctrl,
                                        CTRL_CMD_DIGITAL_TUBE,
@@ -388,13 +393,32 @@ static void USART3_Deal(void *Rx_mesg)
         }
         break;
 
-    /// 旋转编码器：先按控台原始方向/按下状态直接转发给安卓
+    /// 旋转编码器：控台左右方向与安卓定义相反，转发时交换左右；按下保持0x02
     case CTRL_EVENT_ENCODER:
-        Comm_SendMesg_FillData(&Tx1,
-                               Board_to_Android,
-                               t_Encoder,
-                               0x00,
-                               mesg->ExpandCode);
+        if (mesg->ExpandCode == CTRL_ENCODER_LEFT)
+        {
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_Encoder,
+                                   0x00,
+                                   CTRL_ENCODER_RIGHT);
+        }
+        else if (mesg->ExpandCode == CTRL_ENCODER_RIGHT)
+        {
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_Encoder,
+                                   0x00,
+                                   CTRL_ENCODER_LEFT);
+        }
+        else if (mesg->ExpandCode == CTRL_ENCODER_PRESS)
+        {
+            Comm_SendMesg_FillData(&Tx1,
+                                   Board_to_Android,
+                                   t_Encoder,
+                                   0x00,
+                                   CTRL_ENCODER_PRESS);
+        }
         break;
 
     default:
