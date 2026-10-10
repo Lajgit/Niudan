@@ -15,6 +15,8 @@
 Scene_t Scene = IdleScene;
 Event_Handle_t Event;
 
+extern Tx_HandleTypeDef Tx3;
+
 void System_Reset(void)
 {
     __disable_irq();
@@ -39,10 +41,34 @@ void Main_Init(void)
     HoolleInput_FilterInit();
     KeyAll_Init();
 
-    /* 中文注释：当前没有独立控台，四位数码管由主板SPI2直接驱动。 */
+    /* 中文注释：主板本地数码管继续保留，控台数码管通过USART3同步接收显示数据。 */
     DigitalTubeTask_Init();
 
-    /* 中文注释：游玩按键和后台设置按键均直接接主板GPIO，不再向旧控台发送初始化命令。 */
+    /*
+     * 控台上电初始化沿用小丑协议：
+     * 0x00请求版本，0x02灯带亮度，0x03场景，0x04控台亮度。
+     */
+    Comm_SendMesg_FillData(&Tx3, Board_to_Ctrl, CTRL_CMD_GET_VERSION, 0x00, 0x00);
+
+    if (Setting.LightBelt_Lightness <= CTRL_BRIGHTNESS_MAX)
+        Comm_SendMesg_FillData(&Tx3,
+                               Board_to_Ctrl,
+                               CTRL_CMD_LIGHT_BELT_BRIGHTNESS,
+                               Setting.LightBelt_Lightness,
+                               0x00);
+
+    Comm_SendMesg_FillData(&Tx3,
+                           Board_to_Ctrl,
+                           CTRL_CMD_LIGHT_SCENE,
+                           0x00,
+                           (uint8_t)Scene);
+
+    if (Setting.Ctrl_Lightness <= CTRL_BRIGHTNESS_MAX)
+        Comm_SendMesg_FillData(&Tx3,
+                               Board_to_Ctrl,
+                               CTRL_CMD_BRIGHTNESS,
+                               Setting.Ctrl_Lightness,
+                               0x00);
 }
 
 void Main_Task(void)
