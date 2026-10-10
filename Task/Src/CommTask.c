@@ -364,18 +364,13 @@ static void USART3_Deal(void *Rx_mesg)
                       (uint32_t)mesg->Data4;
         break;
 
-    /// 普通按键
+    /// 普通按键：优先按控台原始编号和状态转发给安卓
     case CTRL_EVENT_BUTTON:
-        if (mesg->Data4 >= 0x01U && mesg->Data4 <= 0x06U &&
-            mesg->ExpandCode >= CTRL_KEY_SHORT &&
-            mesg->ExpandCode <= CTRL_KEY_RELEASE)
-        {
-            Comm_SendMesg_FillData(&Tx1,
-                                   Board_to_Android,
-                                   t_Button,
-                                   mesg->Data4,
-                                   mesg->ExpandCode);
-        }
+        Comm_SendMesg_FillData(&Tx1,
+                               Board_to_Android,
+                               t_Button,
+                               mesg->Data4,
+                               mesg->ExpandCode);
         break;
 
     /// 特殊功能按键
@@ -393,32 +388,13 @@ static void USART3_Deal(void *Rx_mesg)
         }
         break;
 
-    /// 旋转编码器
+    /// 旋转编码器：先按控台原始方向/按下状态直接转发给安卓
     case CTRL_EVENT_ENCODER:
-        if (mesg->ExpandCode == CTRL_ENCODER_LEFT)
-        {
-            Servo1.DecreaseAngle(&Servo1, 1U);
-            /* 保持旧安卓方向定义：控台左转0x00，安卓侧上报0x01。 */
-            Comm_SendMesg_FillData(&Tx1,
-                                   Board_to_Android,
-                                   t_Encoder,
-                                   0x00,
-                                   0x01);
-        }
-        else if (mesg->ExpandCode == CTRL_ENCODER_RIGHT)
-        {
-            Servo1.IncreaseAngle(&Servo1, 1U);
-            /* 保持旧安卓方向定义：控台右转0x01，安卓侧上报0x00。 */
-            Comm_SendMesg_FillData(&Tx1,
-                                   Board_to_Android,
-                                   t_Encoder,
-                                   0x00,
-                                   0x00);
-        }
-        else if (mesg->ExpandCode == CTRL_ENCODER_PRESS)
-        {
-            Servo1.SetAngle(&Servo1, 90U);
-        }
+        Comm_SendMesg_FillData(&Tx1,
+                               Board_to_Android,
+                               t_Encoder,
+                               0x00,
+                               mesg->ExpandCode);
         break;
 
     default:
