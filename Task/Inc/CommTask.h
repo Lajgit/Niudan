@@ -8,7 +8,7 @@
 /// 版本号
 #define VERSION_MAJOR  1U
 #define VERSION_MINOR  0U
-#define VERSION_PATCH  0U
+#define VERSION_PATCH  1U
 #define VERSION_BUILD  0U
 
 #define VERSION ((VERSION_MAJOR << 24) | \
@@ -16,9 +16,41 @@
                  (VERSION_PATCH << 8)  | \
                   VERSION_BUILD)
 
-/// 正式通信方向：当前仅保留主板与安卓之间的协议
+/// 通信方向
 #define Board_to_Android 0x00 // 主板->安卓
 #define Android_to_Board 0x01 // 安卓->主板
+#define Board_to_Ctrl    0x02 // 主板->控台
+#define Ctrl_to_Board    0x03 // 控台->主板
+
+/* 主板->控台功能码，沿用小丑控台14字节协议。 */
+#define CTRL_CMD_GET_VERSION            0x00U // 请求控台版本号
+#define CTRL_CMD_DIGITAL_TUBE           0x01U // 数码管，Data1~Data4为4字节数据
+#define CTRL_CMD_LIGHT_BELT_BRIGHTNESS  0x02U // 灯带亮度，Data4=0x00~0x0A
+#define CTRL_CMD_LIGHT_SCENE            0x03U // 灯光场景，ExpandCode=位置/场景编号
+#define CTRL_CMD_BRIGHTNESS             0x04U // 控台亮度，Data4=0x00~0x0A
+#define CTRL_CMD_BUTTON_LIGHT           0x05U // 控台按键灯，Data3=位置，Data4=颜色
+
+/* 控台->主板功能码。 */
+#define CTRL_EVENT_VERSION              0x00U // 控台版本号
+#define CTRL_EVENT_BUTTON               0x01U // 普通按键
+#define CTRL_EVENT_SPECIAL_BUTTON       0x02U // 特殊功能按键
+#define CTRL_EVENT_ENCODER              0x03U // 旋转编码器
+
+#define CTRL_BRIGHTNESS_MAX             0x0AU
+#define CTRL_BUTTON_POSITION_MAX        0x08U
+#define CTRL_BUTTON_COLOR_MAX           0x08U
+
+#define CTRL_KEY_SHORT                  0x01U
+#define CTRL_KEY_LONG                   0x02U
+#define CTRL_KEY_RELEASE                0x03U
+
+#define CTRL_ENCODER_LEFT               0x00U
+#define CTRL_ENCODER_RIGHT              0x01U
+#define CTRL_ENCODER_PRESS              0x02U
+
+#define CTRL_BUTTON_LIGHT_ON            0x00U
+#define CTRL_BUTTON_LIGHT_OFF           0x01U
+#define CTRL_BUTTON_LIGHT_BLINK         0x03U
 
 #define ResendTrigger_Time 1000 // 重新发送触发时间ms
 #define MesgDeal_Time 250       // 消息处理时间
@@ -73,9 +105,11 @@
 #define t_CardID 0x0C              // 绑定卡片ID（旧协议保留，当前未主动发送）
 #define t_AlreadyUnlock 0x0D       // 已开锁
 #define t_LightEye 0x0E            // 光眼（旧协议保留，当前未主动发送）
+#define t_Encoder 0x0F             // 控台编码器转发
 #define t_ChannelRequest 0x10      // 击中通道位置反馈（旧协议保留，当前未主动发送）
 #define t_ClearRemainMesg 0x11     // 清除剩余卡片提示
 #define t_IntoHigherStage 0x12     // 进入高级后台（旧协议保留，当前未主动发送）
+#define t_CtrlSpecialButton 0x15   // 控台特殊功能按键转发
 
 /// 主板接收到安卓的消息功能码
 #define r_GetVersion 0x00             // 获取版本信息
@@ -100,7 +134,9 @@
 #define r_WirelessChannelSetting 0x13 // 无线通信信道设置（旧协议保留，当前未处理）
 #define r_ServoControl 0x14           // 舵机控制（旧协议保留，当前未处理）
 #define r_LightControl 0x15           // 灯控制（旧协议保留，当前未处理）
-#define r_DigitalTubeData 0x16        // 主板直连四位数码管显示数据
+#define r_DigitalTubeData 0x16        // 数码管显示数据，本地显示并同步转发控台
+#define r_CtrlButtonLight 0x17         // 控台按键灯，Data3=位置、Data4=颜色、ExpandCode=状态
+#define r_CtrlLightness 0x18           // 控台亮度
 #define r_ServoReset 0x20             // 舵机1归零
 #define r_SteelBallMotorSwitch 0x21   // 吐珠/钢珠电机手动开关，0=关闭，1=常转
 #define r_StopAllDevice 0xFF          // 停止所有输出
@@ -133,5 +169,8 @@ void MesgDeal_Task(void);
 
 void CommInit(void);
 void CommTask(void);
+
+/* 最近一次收到的控台版本号；未收到前为0。 */
+extern uint32_t CtrlVersion;
 
 #endif
