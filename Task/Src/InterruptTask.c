@@ -260,4 +260,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             &Rx1.Handle.temp_data,
             1);
     }
+    else if (huart == Rx3.Handle.huart)
+    {
+        /*
+         * 中文注释：USART3用于主板与控台通信。
+         * 之前这里只处理Rx1，导致USART3虽然已经启动中断接收，
+         * 但收到的字节没有写入Rx3环形缓冲区，因此控台按键和编码器均无反应。
+         */
+        Rx3.Handle.RingBuf.f_WriteByte(
+            &Rx3.Handle.RingBuf,
+            Rx3.Handle.temp_data);
+
+        HAL_UART_Receive_IT(
+            huart,
+            &Rx3.Handle.temp_data,
+            1);
+    }
 }
