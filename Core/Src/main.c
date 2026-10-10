@@ -96,8 +96,9 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM7_Init();
   MX_IWDG_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* 中文注释：当前无独立控台，仅初始化实际运行所需外设；SPI2用于本板数码管，USART1用于安卓通信。 */
+  /* 中文注释：USART1用于安卓通信，USART3使用PB10/PB11连接独立控台，均为115200 8N1。 */
   Main_Init();
   /* USER CODE END 2 */
 
