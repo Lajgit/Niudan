@@ -249,9 +249,11 @@ static void USART1_Deal(void *Rx_mesg)
                        (uint32_t)mesg->Data2 << 16 |
                        (uint32_t)mesg->Data3 << 8 |
                        (uint32_t)mesg->Data4;
-                /* 中文注释：当前没有独立控台，四位数码管由主板SPI2直接刷新。 */
-                DigitalTube.Set_Num(&DigitalTube, 0, data, 4);
-                DigitalTube.Refresh(&DigitalTube);
+                /*
+                 * 中文注释：数码管由主板SPI2直接刷新。
+                 * 三位兼容标记开启时，显示值会在DigitalTubeTask中左移一位处理。
+                 */
+                DigitalTube_SetDisplayNumber(data);
                 break;
             }
 
