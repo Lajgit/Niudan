@@ -10,7 +10,7 @@ DigitalTube_t DigitalTube;
  * 1 = 开启左移一位显示，例如安卓下发123时按1230写入；
  * 0 = 保持原四位显示逻辑。
  */
-uint8_t DigitalTubeShiftEnable = 0U;
+uint8_t DigitalTubeShiftEnable = 1U;
 
 void DigitalTubeTask_Init(void)
 {

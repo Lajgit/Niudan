@@ -5,10 +5,12 @@
 #include "port_communicate.h"
 #include "app_list.h"
 
+//V1.0.4修改数码管为旧三位数码管显示逻辑（旧三位数码管拆掉C5电容）
+
 /// 版本号
 #define VERSION_MAJOR  1U
 #define VERSION_MINOR  0U
-#define VERSION_PATCH  3U
+#define VERSION_PATCH  4U
 #define VERSION_BUILD  0U
 
 #define VERSION ((VERSION_MAJOR << 24) | \
